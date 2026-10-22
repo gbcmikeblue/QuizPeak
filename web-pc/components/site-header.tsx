@@ -9,6 +9,7 @@ import { clearToken, fetchMe, getToken, type Me } from '@/lib/auth';
 
 const NAV = [
   { href: '/quizzes', label: '答题' },
+  { href: '/leaderboard', label: '排行榜' },
   { href: '/contests', label: '竞赛' },
   { href: '/articles', label: '文章' },
   { href: '/games', label: '小游戏' },
@@ -63,10 +64,14 @@ export function SiteHeader() {
 
           {ready && me ? (
             <>
-              <span className="flex h-9 items-center gap-1.5 rounded-full bg-brand-soft px-3 text-sm font-medium text-[#0B3B27]">
+              <Link
+                href="/points"
+                className="flex h-9 items-center gap-1.5 rounded-full bg-brand-soft px-3 text-sm font-medium text-[#0B3B27] transition hover:bg-brand/15"
+                title="赚积分"
+              >
                 <Star size={15} className="text-[#F5A623]" />
                 {me.points} <span className="text-xs font-normal text-[#4A6B5C]">积分</span>
-              </span>
+              </Link>
               <button
                 type="button"
                 onClick={() => {
