@@ -23,23 +23,30 @@ data/        需求截图
 
 ## 本地启动
 
-前置：Node.js ≥ 20、PostgreSQL 16（或用 `docker compose up -d postgres redis`）。
+前置只有 Node.js ≥ 20。数据库三选一：
+
+| 方式 | 命令 | 适用 |
+| --- | --- | --- |
+| **A. 内置嵌入式 PostgreSQL（默认，无需任何容器）** | `npm run db:local` | 本机没装 Docker / Podman / PostgreSQL |
+| B. Podman / Docker | `podman compose up -d postgres redis` 或 `docker compose up -d postgres redis` | 已装容器运行时 |
+| C. 自建 PostgreSQL | 自行建库并把连接串写入 `server/.env` | 有现成数据库服务 |
+
+方式 A 会把数据放在 `.dev/pgdata`（已 gitignore），首次运行自动下载 PostgreSQL 二进制（约 50MB，仅一次），端口 `5433`：
 
 ```bash
-# 1. 安装依赖（首次）
+# 终端 1：起数据库，保持前台运行，Ctrl+C 停止
+npm run db:local
+# 输出：DATABASE_URL=postgresql://quizpeak:quizpeak@localhost:5433/quizpeak?schema=public
+```
+
+```bash
+# 终端 2
 npm install
-
-# 2. 构建共享包（admin / server / web-pc 依赖其产物）
 npm run build:shared
+copy server\.env.example server\.env     # DATABASE_URL 填上面那行
+npm run db:migrate -w @quizpeak/server   # 首次建表
+npm run db:seed                          # 管理员 / 分类 / 积分规则 / 示例题库
 
-# 3. 配置环境变量
-copy server\.env.example server\.env     # 修改 DATABASE_URL
-
-# 4. 建库 + 初始化数据
-npm run db:migrate -w @quizpeak/server -- --name init
-npm run db:seed
-
-# 5. 启动
 npm run dev:server              # http://localhost:8080/api
 npm run dev:admin               # http://localhost:3001  （admin / Admin@123456）
 npm run dev -w @quizpeak/web-pc # http://localhost:3000

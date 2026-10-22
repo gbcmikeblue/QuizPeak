@@ -2,7 +2,7 @@
   "name": "quizpeak",
   "version": "0.1.0",
   "private": true,
-  "description": "QuizPeak 答题竞赛平台（PC / H5 / 小程序 / 管理后台）",
+  "description": "知巅 QuizPeak 答题竞赛平台（PC / H5 / 小程序 / 管理后台）",
   "workspaces": [
     "packages/*",
     "server",
@@ -15,10 +15,14 @@
     "build:admin": "npm run build -w @quizpeak/admin",
     "dev:server": "npm run start:dev -w @quizpeak/server",
     "dev:admin": "npm run dev -w @quizpeak/admin",
+    "db:local": "node scripts/dev-db.mjs",
     "db:generate": "npm run prisma:generate -w @quizpeak/server",
     "db:migrate": "npm run prisma:migrate -w @quizpeak/server",
     "db:seed": "npm run prisma:seed -w @quizpeak/server",
     "typecheck": "npm run typecheck -w @quizpeak/shared && npm run typecheck -w @quizpeak/server && npm run typecheck -w @quizpeak/admin"
+  },
+  "devDependencies": {
+    "embedded-postgres": "^18.4.0-beta.17"
   },
   "engines": {
     "node": ">=20"
