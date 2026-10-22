@@ -51,9 +51,17 @@ function LoginInner() {
     setError('');
     setSending(true);
     try {
-      await post('/auth/sms-code', { phone, scene: 'LOGIN' });
+      const res = await post<{ ttl: number; devCode?: string }>('/auth/sms-code', {
+        phone,
+        scene: 'LOGIN',
+      });
       setSeconds(60);
-      setTip('验证码已发送；开发环境请查看 server 控制台的 [SMS:LOGIN] 日志');
+      if (res.devCode) {
+        setCode(res.devCode);
+        setTip(`开发环境验证码：${res.devCode}（已自动填入，也可在后台「短信记录」查看）`);
+      } else {
+        setTip('验证码已发送，请查收短信');
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : '发送失败');
     } finally {
