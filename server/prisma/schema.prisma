@@ -1,0 +1,506 @@
+// 知巅 数据模型（M1/M2 范围；工单、徽章、游戏等后续模块按 05 文档追加）
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ 枚举 ============
+
+enum UserStatus {
+  ACTIVE
+  BANNED
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum QuizStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum QuestionType {
+  SINGLE
+  MULTI
+  TRUE_FALSE
+  FILL
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  FINISHED
+  ABANDONED
+}
+
+enum ContestStatus {
+  DRAFT
+  UPCOMING
+  RUNNING
+  ENDED
+  SETTLED
+}
+
+// 积分变动类型：全部为站内积分，不涉及任何货币
+enum PointTxType {
+  REGISTER_BONUS
+  CHECKIN
+  ACTIVITY
+  LIKE_GIVEN
+  AD_REWARD
+  INVITE_REWARD
+  QUIZ_REWARD
+  QUIZ_ENROLL
+  CONTEST_ENROLL
+  CONTEST_REWARD
+  HINT_COST
+  ADMIN_ADJUST
+}
+
+// ============ 用户 ============
+
+model User {
+  id           String     @id @default(cuid())
+  phone        String     @unique
+  email        String?    @unique
+  passwordHash String?
+  username     String     @unique
+  nickname     String?
+  firstName    String?
+  lastName     String?
+  avatar       String?
+  address      String?
+  /// 站内积分（不可兑换货币）
+  points       Int        @default(0)
+  /// 历史累计获得积分，用于风控与运营统计
+  totalEarned  Int        @default(0)
+  /// 被点赞次数（人气值）
+  likesReceived Int       @default(0)
+  xp           Int        @default(0)
+  level        Int        @default(1)
+  streakDays   Int        @default(0)
+  lastCheckinAt DateTime?
+  lastLoginAt  DateTime?
+  inviteCode   String     @unique
+  inviterId    String?
+  inviter      User?      @relation("UserInvites", fields: [inviterId], references: [id])
+  invitees     User[]     @relation("UserInvites")
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  quizEnrollments   QuizEnrollment[]
+  quizAttempts      QuizAttempt[]
+  contestEnrollments ContestEnrollment[]
+  contestAttempts   ContestAttempt[]
+  pointTransactions PointTransaction[]
+  checkins          DailyCheckin[]
+  likesGiven        PointLike[]   @relation("LikeFrom")
+  likesReceivedList PointLike[]   @relation("LikeTo")
+  adViews           AdView[]
+  activityRewards   ActivityReward[]
+  notifications     Notification[]
+  gameRecords       GameRecord[]
+
+  @@index([createdAt])
+  @@index([inviterId])
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  passwordHash String
+  name         String
+  role         String    @default("OPERATOR") // AdminRoleCode
+  status       UserStatus @default(ACTIVE)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+}
+
+model SmsCode {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  scene     String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([phone, scene, createdAt])
+}
+
+// ============ 分类与题库 ============
+
+model Category {
+  id      String  @id @default(cuid())
+  name    String
+  nameEn  String?
+  icon    String?
+  type    String  @default("QUIZ") // QUIZ | CONTEST | ARTICLE
+  sort    Int     @default(0)
+  enabled Boolean @default(true)
+
+  quizzes  Quiz[]
+  contests Contest[]
+  articles Article[]
+}
+
+model Quiz {
+  id              String     @id @default(cuid())
+  title           String
+  titleEn         String?
+  slug            String     @unique
+  cover           String?
+  description     String?
+  categoryId      String?
+  category        Category?  @relation(fields: [categoryId], references: [id])
+  difficulty      Difficulty @default(BEGINNER)
+  durationSec     Int        @default(1200)
+  questionCount   Int        @default(10)
+  levelsCount     Int        @default(10)
+  unlockThreshold Int        @default(90)
+  enrollFee       Int        @default(0)
+  playerCount     Int        @default(0)
+  status          QuizStatus @default(DRAFT)
+  createdBy       String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  levels       QuizLevel[]
+  questions    Question[]
+  enrollments  QuizEnrollment[]
+  attempts     QuizAttempt[]
+
+  @@index([categoryId, status])
+}
+
+model QuizLevel {
+  id            String @id @default(cuid())
+  quizId        String
+  quiz          Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  levelNo       Int
+  questionCount Int    @default(8)
+  passThreshold Int    @default(90)
+
+  questions Question[]
+  attempts  QuizAttempt[]
+
+  @@unique([quizId, levelNo])
+}
+
+model Question {
+  id       String       @id @default(cuid())
+  quizId   String?
+  quiz     Quiz?        @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  levelId  String?
+  level    QuizLevel?   @relation(fields: [levelId], references: [id], onDelete: SetNull)
+  type     QuestionType @default(SINGLE)
+  stem     String
+  options  Json         @default("[]") // [{ key, text }]
+  answer   Json         @default("[]") // ["A"] / ["A","C"] / ["True"]
+  analysis String?
+  score    Int          @default(10)
+  sort     Int          @default(0)
+  enabled  Boolean      @default(true)
+
+  contestLinks ContestQuestion[]
+  answers      QuizAnswer[]
+
+  @@index([quizId, levelId])
+}
+
+// ============ Quiz 作答 ============
+
+model QuizEnrollment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizId    String
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  feePaid   Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([userId, quizId])
+  @@index([quizId])
+}
+
+model QuizAttempt {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizId      String
+  quiz        Quiz          @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  levelId     String?
+  level       QuizLevel?    @relation(fields: [levelId], references: [id], onDelete: SetNull)
+  status      AttemptStatus @default(IN_PROGRESS)
+  score       Int           @default(0)
+  totalScore  Int           @default(0)
+  correctCount Int          @default(0)
+  wrongCount  Int           @default(0)
+  durationSec Int           @default(0)
+  questionIds Json          @default("[]")
+  startedAt   DateTime      @default(now())
+  finishedAt  DateTime?
+
+  answers QuizAnswer[]
+
+  @@index([userId, quizId, status])
+}
+
+model QuizAnswer {
+  id        String   @id @default(cuid())
+  attemptId String
+  attempt   QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId String
+  question  Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answer    Json     @default("[]")
+  isCorrect Boolean  @default(false)
+  usedSec   Int      @default(0)
+  hintUsed  Boolean  @default(false)
+  skipped   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([attemptId, questionId])
+}
+
+// ============ 竞赛 ============
+
+model Contest {
+  id            String        @id @default(cuid())
+  title         String
+  cover         String?
+  description   String?
+  categoryId    String?
+  category      Category?     @relation(fields: [categoryId], references: [id])
+  questionCount Int           @default(8)
+  durationSec   Int           @default(960)
+  startAt       DateTime
+  endAt         DateTime
+  enrollEndAt   DateTime?
+  capacity      Int           @default(500)
+  entryFee      Int           @default(0)
+  prizePool     Int           @default(0)
+  prizePoolUnit String        @default("POINTS")
+  status        ContestStatus @default(UPCOMING)
+  createdBy     String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  prizes      ContestPrize[]
+  questions   ContestQuestion[]
+  enrollments ContestEnrollment[]
+  attempts    ContestAttempt[]
+
+  @@index([status, startAt])
+}
+
+model ContestPrize {
+  id        String  @id @default(cuid())
+  contestId String
+  contest   Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  rank      Int
+  /// 名次奖励积分
+  points    Int     @default(0)
+  xp        Int     @default(0)
+
+  @@unique([contestId, rank])
+}
+
+model ContestQuestion {
+  id         String   @id @default(cuid())
+  contestId  String
+  contest    Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  sort       Int      @default(0)
+
+  @@unique([contestId, questionId])
+}
+
+model ContestEnrollment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contestId String
+  contest   Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  feePaid   Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, contestId])
+  @@index([contestId])
+}
+
+model ContestAttempt {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contestId    String
+  contest      Contest       @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  score        Int           @default(0)
+  totalTimeSec Int           @default(0)
+  rank         Int?
+  status       AttemptStatus @default(IN_PROGRESS)
+  startedAt    DateTime      @default(now())
+  finishedAt   DateTime?
+
+  @@unique([userId, contestId])
+  @@index([contestId, score])
+}
+
+// ============ 积分体系（站内积分，不涉及货币） ============
+
+model PointTransaction {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  change       Int
+  balanceAfter Int
+  type         PointTxType
+  refType      String?
+  refId        String?
+  remark       String?
+  createdAt    DateTime    @default(now())
+
+  @@index([userId, createdAt])
+  @@index([type, createdAt])
+  // 同一业务来源只允许入账一次，保证签到 / 广告 / 活动 / 点赞幂等
+  @@unique([type, refType, refId])
+}
+
+model DailyCheckin {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// YYYY-MM-DD（Asia/Shanghai）
+  checkinDate String
+  streakDay   Int      @default(1)
+  points      Int
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, checkinDate])
+  @@index([userId, createdAt])
+}
+
+model PointLike {
+  id         String   @id @default(cuid())
+  fromUserId String
+  fromUser   User     @relation("LikeFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUserId   String
+  toUser     User     @relation("LikeTo", fields: [toUserId], references: [id], onDelete: Cascade)
+  /// 榜单类型：LEADERBOARD_ALL / LEADERBOARD_MONTH
+  targetType String
+  /// 被点赞记录的业务 id（榜单周期标识等）
+  targetId   String?
+  points     Int      @default(0)
+  likeDate   String
+  createdAt  DateTime @default(now())
+
+  @@unique([fromUserId, toUserId, likeDate])
+  @@index([toUserId, likeDate])
+}
+
+model AdView {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  viewDate  String
+  seq       Int
+  points    Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, viewDate, seq])
+  @@index([userId, viewDate])
+}
+
+/// 运营活动：送积分
+model Activity {
+  id        String           @id @default(cuid())
+  title     String
+  titleEn   String?
+  desc      String?
+  points    Int              @default(50)
+  startAt   DateTime
+  endAt     DateTime
+  enabled   Boolean          @default(true)
+  createdAt DateTime         @default(now())
+
+  rewards ActivityReward[]
+
+  @@index([enabled, startAt])
+}
+
+model ActivityReward {
+  id         String   @id @default(cuid())
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  points     Int
+  createdAt  DateTime @default(now())
+
+  @@unique([activityId, userId])
+}
+
+// ============ 内容 / 通知 / 配置 ============
+
+model Article {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  cover       String?
+  summary     String?
+  content     String
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  tags        Json      @default("[]")
+  views       Int       @default(0)
+  readMinutes Int       @default(3)
+  status      String    @default("DRAFT") // DRAFT | PUBLISHED
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status, publishedAt])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  content   String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead, createdAt])
+}
+
+model SiteConfig {
+  key       String   @id
+  value     Json
+  remark    String?
+  updatedAt DateTime @updatedAt
+}
+
+model GameRecord {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game       String
+  playDate   String // YYYY-MM-DD，用于「每日一次」限制
+  result     Json     @default("{}")
+  rewardPoints Int    @default(0)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, game, playDate])
+}

@@ -1,0 +1,26 @@
+{
+  "name": "quizpeak",
+  "version": "0.1.0",
+  "private": true,
+  "description": "QuizPeak 答题竞赛平台（PC / H5 / 小程序 / 管理后台）",
+  "workspaces": [
+    "packages/*",
+    "server",
+    "admin",
+    "web-pc"
+  ],
+  "scripts": {
+    "build:shared": "npm run build -w @quizpeak/shared",
+    "build:server": "npm run build -w @quizpeak/server",
+    "build:admin": "npm run build -w @quizpeak/admin",
+    "dev:server": "npm run start:dev -w @quizpeak/server",
+    "dev:admin": "npm run dev -w @quizpeak/admin",
+    "db:generate": "npm run prisma:generate -w @quizpeak/server",
+    "db:migrate": "npm run prisma:migrate -w @quizpeak/server",
+    "db:seed": "npm run prisma:seed -w @quizpeak/server",
+    "typecheck": "npm run typecheck -w @quizpeak/shared && npm run typecheck -w @quizpeak/server && npm run typecheck -w @quizpeak/admin"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

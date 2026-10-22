@@ -1,0 +1,40 @@
+# ---- 依赖与构建产物 ----
+node_modules/
+dist/
+.next/
+out/
+build/
+.turbo/
+*.tsbuildinfo
+.eslintcache
+
+# ---- 环境变量与密钥（务必不要提交）----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.csr
+
+# ---- 运行时产物 / 上传 ----
+*.log
+logs/
+uploads/
+server/storage/
+server/prisma/*.db
+server/prisma/*.db-journal
+coverage/
+
+# ---- 编辑器与系统 ----
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# ---- 工具/需求素材（本地保留，不入库）----
+.codebuddy/
+data/

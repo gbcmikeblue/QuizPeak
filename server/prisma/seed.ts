@@ -1,0 +1,185 @@
+/* 初始化数据：管理员、分类、积分规则、示例活动、示例 Quiz（10 关） */
+import { PrismaClient, Difficulty, QuestionType, QuizStatus } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
+
+const prisma = new PrismaClient();
+
+const CATEGORIES = [
+  { name: '网络安全', nameEn: 'Cybersecurity', icon: '🛡️' },
+  { name: '常识', nameEn: 'General Knowledge', icon: '🌍' },
+  { name: '科学', nameEn: 'Science', icon: '🔬' },
+  { name: '历史', nameEn: 'History', icon: '🏛️' },
+  { name: '地理', nameEn: 'Geography', icon: '🗺️' },
+  { name: '数学', nameEn: 'Mathematics', icon: '➗' },
+  { name: '文学', nameEn: 'Literature', icon: '📖' },
+  { name: '体育', nameEn: 'Sports', icon: '⚽' },
+  { name: '影视', nameEn: 'Movies', icon: '🎬' },
+  { name: '编程', nameEn: 'Programming', icon: '💻' },
+];
+
+const SITE_CONFIG: Array<{ key: string; value: unknown; remark: string }> = [
+  { key: 'rule.question_duration_sec', value: 120, remark: '单题答题时长（秒）' },
+  { key: 'rule.level_unlock_percent', value: 90, remark: '关卡解锁所需正确率' },
+  { key: 'rule.questions_per_level', value: 8, remark: '每关题数' },
+  { key: 'rule.hint_free_per_attempt', value: 1, remark: '每场免费提示次数' },
+  { key: 'rule.hint_point_cost', value: 10, remark: '提示消耗积分' },
+  { key: 'rule.skip_per_attempt', value: 3, remark: '每场跳过次数' },
+  { key: 'points.checkin_base', value: 10, remark: '每日签到基础积分' },
+  { key: 'points.checkin_streak_step', value: 2, remark: '连续签到每日递增积分' },
+  { key: 'points.checkin_streak_max_bonus', value: 20, remark: '连续签到递增封顶' },
+  { key: 'points.ad_reward', value: 10, remark: '看广告单次积分' },
+  { key: 'points.ad_daily_limit', value: 5, remark: '看广告每日次数' },
+  { key: 'points.like_reward', value: 5, remark: '点赞单次积分' },
+  { key: 'points.like_daily_limit', value: 5, remark: '点赞每日次数' },
+  { key: 'points.register_bonus', value: 100, remark: '新用户注册赠送积分' },
+  { key: 'points.invite_reward', value: 100, remark: '邀请好友奖励积分' },
+  { key: 'site.name', value: '知巅', remark: '站点名称' },
+  { key: 'site.name_en', value: 'QuizPeak', remark: '站点英文名' },
+  { key: 'site.contact_phone', value: '', remark: '客服电话' },
+  { key: 'site.contact_email', value: '', remark: '客服邮箱' },
+];
+
+async function main() {
+  // 1. 管理员
+  const passwordHash = await bcrypt.hash('Admin@123456', 10);
+  await prisma.adminUser.upsert({
+    where: { username: 'admin' },
+    create: { username: 'admin', passwordHash, name: '超级管理员', role: 'SUPER_ADMIN' },
+    update: {},
+  });
+  console.log('[seed] admin ready: admin / Admin@123456');
+
+  // 2. 分类
+  for (const [index, c] of CATEGORIES.entries()) {
+    const exists = await prisma.category.findFirst({ where: { nameEn: c.nameEn, type: 'QUIZ' } });
+    if (!exists) {
+      await prisma.category.create({
+        data: { name: c.name, nameEn: c.nameEn, icon: c.icon, type: 'QUIZ', sort: index },
+      });
+    }
+  }
+
+  // 3. 示例活动（活动送积分）
+  const activityExists = await prisma.activity.findFirst({ where: { title: '新赛季冲榜活动' } });
+  if (!activityExists) {
+    await prisma.activity.create({
+      data: {
+        title: '新赛季冲榜活动',
+        titleEn: 'New Season Boost',
+        desc: '活动期间完成任意一场答题，即可领取 50 积分。',
+        points: 50,
+        startAt: new Date(Date.now() - 86400000),
+        endAt: new Date(Date.now() + 30 * 86400000),
+      },
+    });
+  }
+
+  // 4. 站点配置
+  for (const item of SITE_CONFIG) {
+    await prisma.siteConfig.upsert({
+      where: { key: item.key },
+      create: { key: item.key, value: item.value as object, remark: item.remark },
+      update: { remark: item.remark },
+    });
+  }
+
+  // 5. 示例 Quiz（10 关，每关 8 题，题库按关卡生成）
+  const category = await prisma.category.findFirst({ where: { nameEn: 'Programming', type: 'QUIZ' } });
+  const quizSlug = 'algorithms';
+  let quiz = await prisma.quiz.findUnique({ where: { slug: quizSlug } });
+  if (!quiz) {
+    quiz = await prisma.quiz.create({
+      data: {
+        title: '算法基础',
+        titleEn: 'Algorithms',
+        slug: quizSlug,
+        description:
+          '考察排序、查找与复杂度分析等算法基础知识。每题需在 120 秒内作答，答对 90% 以上可解锁下一关。',
+        categoryId: category?.id,
+        difficulty: Difficulty.INTERMEDIATE,
+        durationSec: 8 * 120,
+        questionCount: 8,
+        levelsCount: 10,
+        unlockThreshold: 90,
+        enrollFee: 600,
+        status: QuizStatus.PUBLISHED,
+      },
+    });
+    console.log(`[seed] quiz created: ${quiz.title}`);
+  }
+
+  const template = [
+    {
+      stem: 'CPU 被称为计算机的大脑。',
+      type: QuestionType.TRUE_FALSE,
+      options: [
+        { key: '1', text: '正确' },
+        { key: '2', text: '错误' },
+      ],
+      answer: ['1'],
+      analysis: 'CPU 负责执行指令与运算，被称为计算机的大脑。',
+    },
+    {
+      stem: '下列哪些排序算法在最坏情况下时间复杂度为 O(n log n)？',
+      type: QuestionType.MULTI,
+      options: [
+        { key: '1', text: '归并排序' },
+        { key: '2', text: '快速排序' },
+        { key: '3', text: '堆排序' },
+        { key: '4', text: '冒泡排序' },
+      ],
+      answer: ['1', '3'],
+      analysis: '归并与堆排序最坏情况均为 O(n log n)，快排最坏为 O(n²)。',
+    },
+    {
+      stem: '二分查找要求数据必须是有序的。',
+      type: QuestionType.TRUE_FALSE,
+      options: [
+        { key: '1', text: '正确' },
+        { key: '2', text: '错误' },
+      ],
+      answer: ['1'],
+      analysis: '二分查找依赖有序性来缩小查找区间。',
+    },
+  ];
+
+  let totalQuestions = 0;
+  for (let levelNo = 1; levelNo <= 10; levelNo += 1) {
+    const level = await prisma.quizLevel.upsert({
+      where: { quizId_levelNo: { quizId: quiz.id, levelNo } },
+      create: { quizId: quiz.id, levelNo, questionCount: 8, passThreshold: 90 },
+      update: {},
+    });
+
+    const existing = await prisma.question.count({ where: { levelId: level.id } });
+    if (existing === 0) {
+      for (let i = 0; i < 8; i += 1) {
+        const tpl = template[i % template.length];
+        await prisma.question.create({
+          data: {
+            quizId: quiz.id,
+            levelId: level.id,
+            type: tpl.type,
+            stem: `第 ${levelNo} 关 · ${tpl.stem}`,
+            options: tpl.options,
+            answer: tpl.answer,
+            analysis: tpl.analysis,
+            score: 10,
+            sort: i,
+          },
+        });
+        totalQuestions += 1;
+      }
+    }
+  }
+  console.log(`[seed] questions created: ${totalQuestions}`);
+
+  console.log('[seed] done');
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(() => prisma.$disconnect());
