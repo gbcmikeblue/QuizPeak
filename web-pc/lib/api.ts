@@ -28,6 +28,88 @@ export interface PageResult<T> {
   pageSize: number;
 }
 
+export interface QuizLevelInfo {
+  id: string;
+  levelNo: number;
+  questionCount: number;
+  passThreshold: number;
+}
+
+export interface QuizDetail extends QuizCard {
+  description: string | null;
+  unlockThreshold: number;
+  questionTotal: number;
+  levels: QuizLevelInfo[];
+}
+
+export interface QuestionOption {
+  key: string;
+  text: string;
+}
+
+export type QuestionTypeCode = 'SINGLE' | 'MULTI' | 'TRUE_FALSE' | 'FILL';
+
+export interface PlayQuestion {
+  id: string;
+  type: QuestionTypeCode;
+  stem: string;
+  options: QuestionOption[];
+  score: number;
+}
+
+export interface PlayData {
+  attemptId: string;
+  quiz: { id: string; title: string; levelNo: number };
+  questionSeconds: number;
+  questions: PlayQuestion[];
+  answered: Array<{ questionId: string; answer: string[]; isCorrect: boolean; skipped: boolean }>;
+}
+
+export interface AnswerResult {
+  isCorrect: boolean;
+  correctAnswer: string[];
+  analysis: string | null;
+  score: number;
+}
+
+export interface FinishResult {
+  attemptId: string;
+  score: number;
+  totalScore: number;
+  correctCount: number;
+  wrongCount: number;
+  rate: number;
+  durationSec: number;
+  pointsEarned: number;
+  xpEarned: number;
+  nextLevelUnlocked: boolean;
+}
+
+export interface ReviewItem {
+  index: number;
+  questionId: string;
+  stem: string;
+  options: QuestionOption[];
+  correctAnswer: string[];
+  userAnswer: string[];
+  isCorrect: boolean;
+  skipped: boolean;
+  analysis: string;
+}
+
+export interface ReviewData {
+  attempt: {
+    id: string;
+    score: number;
+    totalScore: number;
+    correctCount: number;
+    wrongCount: number;
+    durationSec: number;
+    finishedAt: string | null;
+  };
+  items: ReviewItem[];
+}
+
 /** 服务端渲染时的数据获取；接口不可用时返回空结果，避免整站 500 */
 export async function fetchQuizzes(params: Record<string, string> = {}): Promise<PageResult<QuizCard>> {
   const query = new URLSearchParams(params).toString();
