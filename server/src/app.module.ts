@@ -13,6 +13,7 @@ import { ArticlesModule } from './articles/articles.module';
 import { AuthModule } from './auth/auth.module';
 import { ContestsModule } from './contests/contests.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { GamesModule } from './games/games.module';
 import { HealthController } from './health/health.controller';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { MeModule } from './me/me.module';
@@ -47,6 +48,7 @@ import { UsersModule } from './users/users.module';
     UploadModule,
     TicketsModule,
     NotificationsModule,
+    GamesModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],

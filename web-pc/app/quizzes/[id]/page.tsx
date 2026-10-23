@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowRight, Clock, Coins, Heart, HelpCircle, Lock, Users } from 'lucide-react';
+import { ShareButton } from '@/components/share-button';
 import { API_BASE, type QuizDetail } from '@/lib/api';
 import { authFetch, getToken } from '@/lib/auth';
 
@@ -222,6 +223,13 @@ export default function QuizDetailPage() {
               <Heart size={14} className={favorited ? 'fill-brand text-brand' : ''} />
               {favorited ? '已收藏' : '收藏题库'}
             </button>
+
+            <ShareButton
+              title={`${quiz.title} · 知巅`}
+              text={`一起来挑战「${quiz.title}」，${quiz.levelsCount} 关等你闯`}
+              path={`/quizzes/${quiz.id}`}
+              className="mt-2 w-full"
+            />
 
             {locked ? (
               <button type="button" onClick={() => requireLogin(unlock)} disabled={busy} className="btn-primary mt-5 h-10 w-full">

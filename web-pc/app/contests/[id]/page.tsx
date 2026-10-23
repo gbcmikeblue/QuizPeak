@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { CalendarDays, Coins, Loader2, Trophy, Users } from 'lucide-react';
+import { ShareButton } from '@/components/share-button';
 import { API_BASE, type ContestDetail } from '@/lib/api';
 import { authFetch, fetchMe, getToken, type Me } from '@/lib/auth';
 
@@ -280,6 +281,13 @@ export default function ContestDetailPage() {
 
             {error ? <p className="mt-2 text-center text-xs text-red-600">{error}</p> : null}
           </div>
+
+          <ShareButton
+            title={`${contest.title} · 知巅竞赛`}
+            text={`${contest.title}：${contest.questionCount} 题竞赛，奖池 ${contest.prizePool} 积分`}
+            path={`/contests/${contest.id}`}
+            className="w-full"
+          />
 
           <div className="rounded-card bg-brand-cream/60 p-4 text-xs leading-6 text-[#6B5B2E]">
             <CalendarDays size={13} className="mr-1 inline" />

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { ShareButton } from '@/components/share-button';
 import { API_BASE } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
@@ -45,6 +46,10 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           {article.publishedAt ? new Date(article.publishedAt).toLocaleDateString('zh-CN') : '—'} ·{' '}
           {article.readMinutes} 分钟阅读 · {article.views} 次浏览
         </p>
+
+        <div className="mt-4 flex items-center gap-2">
+          <ShareButton title={`${article.title} · 知巅`} text={article.summary ?? article.title} path={`/articles/${slug}`} />
+        </div>
 
         <article className="mt-6 whitespace-pre-wrap text-[15px] leading-8 text-[#344054]">{article.content}</article>
 
