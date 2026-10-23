@@ -19,6 +19,7 @@ import { MeModule } from './me/me.module';
 import { PointsModule } from './points/points.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { QuizModule } from './quiz/quiz.module';
+import { TicketsModule } from './tickets/tickets.module';
 import { UploadModule } from './upload/upload.module';
 import { UsersModule } from './users/users.module';
 
@@ -43,6 +44,7 @@ import { UsersModule } from './users/users.module';
     LeaderboardModule,
     MeModule,
     UploadModule,
+    TicketsModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],

@@ -48,6 +48,18 @@ enum ContestStatus {
   SETTLED
 }
 
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
 // 积分变动类型：全部为站内积分，不涉及任何货币
 enum PointTxType {
   REGISTER_BONUS
@@ -108,6 +120,7 @@ model User {
   activityRewards   ActivityReward[]
   favorites         Favorite[]
   badges            UserBadge[]
+  tickets           Ticket[]
   notifications     Notification[]
   gameRecords       GameRecord[]
 
@@ -533,6 +546,38 @@ model UserBadge {
 
   @@unique([userId, badgeId])
   @@index([userId, createdAt])
+}
+
+model Ticket {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject   String
+  /// 分类：ACCOUNT / QUIZ / POINTS / CONTEST / OTHER
+  category  String         @default("OTHER")
+  content   String
+  status    TicketStatus   @default(OPEN)
+  priority  TicketPriority @default(MEDIUM)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  replies TicketReply[]
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
+model TicketReply {
+  id         String   @id @default(cuid())
+  ticketId   String
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  /// USER / ADMIN
+  authorType String   @default("USER")
+  authorId   String
+  content    String
+  createdAt  DateTime @default(now())
+
+  @@index([ticketId, createdAt])
 }
 
 model Notification {
