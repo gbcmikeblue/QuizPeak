@@ -1,0 +1,16 @@
+node_modules
+**/node_modules
+.next
+**/.next
+dist
+**/dist
+.dev
+data
+doc
+.git
+.gitignore
+*.log
+**/*.log
+server/uploads
+backups
+deploy/certs

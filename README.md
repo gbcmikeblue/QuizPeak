@@ -86,6 +86,15 @@ npm run verify             # 任意终端：200ms 探活四个服务
 npm run clean              # 需要时清理 .next / dist / .cache（直接删除，不进回收站）
 ```
 
+**长期挂服务（无窗口）**：用 PM2 跑构建产物，详见 `doc/11-本地运行与进程管理.md`
+
+```bash
+npx pm2 start ecosystem.config.cjs   # 后台启动 api / web / admin
+npx pm2 list                         # 状态
+npx pm2 logs api                     # 日志（已自动轮转：10MB / 保留 7 份 / 压缩）
+npx pm2 restart api                  # 改了后端并 build 后重启
+```
+
 - 前端改完 **HMR 秒级生效**，服务端改完 **watch 自动重启**，都不需要 `build`
 - 生产构建只在发版前执行：`npm run build -w @quizpeak/server && npm run build -w @quizpeak/admin && npm run build -w @quizpeak/web-pc`
 - 实测：旧方式（每次 build + 重启 + 固定等待）约 65s，新方式约 3s

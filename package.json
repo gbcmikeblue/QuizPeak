@@ -26,7 +26,8 @@
     "typecheck": "npm run typecheck -w @quizpeak/shared && npm run typecheck -w @quizpeak/server && npm run typecheck -w @quizpeak/admin"
   },
   "devDependencies": {
-    "embedded-postgres": "^18.4.0-beta.17"
+    "embedded-postgres": "^18.4.0-beta.17",
+    "pm2": "^7.1.0"
   },
   "engines": {
     "node": ">=20"
