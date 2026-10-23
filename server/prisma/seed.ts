@@ -216,6 +216,52 @@ async function main() {
     console.log(`[seed] contest created: ${contestTitle} (${contestQuestions.length} 题)`);
   }
 
+  // 7. 示例文章
+  const articles = [
+    {
+      title: '如何在 10 关里稳定拿到 90% 正确率',
+      slug: 'how-to-score-90',
+      summary: '拆解题库的关卡设计，给出可执行的答题策略。',
+      content:
+        '一、先看题目类型\n判断与单选题占多数，先把题干里的关键词圈出来，避免被长句干扰。\n\n二、控制节奏\n每题 120 秒，建议 40 秒内做出选择，把时间留给不确定的题。\n\n三、错题复盘\n交卷后一定看解析，错题集中在同一知识点时，说明该知识点需要重新过一遍。',
+      tags: ['答题技巧', 'Strategy'],
+      readMinutes: 3,
+    },
+    {
+      title: '积分怎么赚：签到、看广告与点赞',
+      slug: 'how-to-earn-points',
+      summary: '三条稳定的积分来源，以及每天的上限。',
+      content:
+        '每日签到：+10 积分起，连续签到每天多 +2，封顶 +20 递增。\n\n看广告：每次 +10 积分，每天 5 次。\n\n给上榜选手点赞：每次 +5 积分，每天 5 次，同一位选手每天只能点一次。\n\n活动奖励：运营会不定期开放，记得在「赚积分」页看一眼。',
+      tags: ['积分', 'Guide'],
+      readMinutes: 2,
+    },
+  ];
+
+  for (const a of articles) {
+    const exists = await prisma.article.findUnique({ where: { slug: a.slug } });
+    if (!exists) {
+      await prisma.article.create({
+        data: { ...a, status: 'PUBLISHED', publishedAt: new Date(), views: 0 },
+      });
+    }
+  }
+  console.log(`[seed] articles ready: ${articles.length}`);
+
+  // 8. 徽章定义
+  const BADGES = [
+    { code: 'FIRST_QUIZ', name: '初次登顶', nameEn: 'First Climb', desc: '完成一场答题', icon: '🎯', condition: 'QUIZ_COUNT', threshold: 1, sort: 1 },
+    { code: 'QUIZ_10', name: '十战成名', nameEn: 'Ten Battles', desc: '累计完成 10 场答题', icon: '⚔️', condition: 'QUIZ_COUNT', threshold: 10, sort: 2 },
+    { code: 'PERFECT', name: '满分答题', nameEn: 'Perfect Run', desc: '任意一关拿到 100% 正确率', icon: '💯', condition: 'PERFECT_COUNT', threshold: 1, sort: 3 },
+    { code: 'STREAK_7', name: '七日不断', nameEn: 'Seven-Day Streak', desc: '连续签到 7 天', icon: '🔥', condition: 'STREAK_DAYS', threshold: 7, sort: 4 },
+    { code: 'POINTS_1000', name: '积分千点', nameEn: 'Thousand Points', desc: '累计获得 1000 积分', icon: '💎', condition: 'POINTS_EARNED', threshold: 1000, sort: 5 },
+    { code: 'CONTEST_TOP3', name: '竞赛前三', nameEn: 'Contest Podium', desc: '在任意竞赛中进入前三名', icon: '🏆', condition: 'CONTEST_TOP3', threshold: 1, sort: 6 },
+  ];
+  for (const b of BADGES) {
+    await prisma.badge.upsert({ where: { code: b.code }, create: b, update: { desc: b.desc, threshold: b.threshold } });
+  }
+  console.log(`[seed] badges ready: ${BADGES.length}`);
+
   console.log('[seed] done');
 }
 

@@ -106,6 +106,8 @@ model User {
   likesReceivedList PointLike[]   @relation("LikeTo")
   adViews           AdView[]
   activityRewards   ActivityReward[]
+  favorites         Favorite[]
+  badges            UserBadge[]
   notifications     Notification[]
   gameRecords       GameRecord[]
 
@@ -488,6 +490,49 @@ model Article {
   updatedAt   DateTime  @updatedAt
 
   @@index([status, publishedAt])
+}
+
+/// 收藏：题型统一用 targetType 区分（QUIZ / CONTEST / ARTICLE）
+model Favorite {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetType String
+  targetId   String
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, targetType, targetId])
+  @@index([userId, targetType, createdAt])
+}
+
+/// 徽章定义（条件类型 + 阈值可在后台配置）
+model Badge {
+  id        String      @id @default(cuid())
+  code      String      @unique
+  name      String
+  nameEn    String?
+  desc      String
+  icon      String      @default("🏅")
+  /// 条件类型：QUIZ_COUNT / PERFECT_COUNT / STREAK_DAYS / POINTS_EARNED / CONTEST_TOP3 / LIKES_RECEIVED
+  condition String
+  threshold Int         @default(1)
+  enabled   Boolean     @default(true)
+  sort      Int         @default(0)
+  createdAt DateTime    @default(now())
+
+  awards UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId   String
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
+  @@index([userId, createdAt])
 }
 
 model Notification {

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowRight, Clock, Coins, HelpCircle, Lock, Users } from 'lucide-react';
+import { ArrowRight, Clock, Coins, Heart, HelpCircle, Lock, Users } from 'lucide-react';
 import { API_BASE, type QuizDetail } from '@/lib/api';
 import { authFetch, getToken } from '@/lib/auth';
 
@@ -35,6 +35,23 @@ export default function QuizDetailPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [favorited, setFavorited] = useState(false);
+
+  async function toggleFavorite() {
+    if (!getToken()) {
+      router.push(`/login?redirect=${encodeURIComponent(`/quizzes/${id}`)}`);
+      return;
+    }
+    try {
+      const res = await authFetch<{ favorited: boolean }>('/me/favorites/toggle', {
+        method: 'POST',
+        body: JSON.stringify({ targetType: 'QUIZ', targetId: id }),
+      });
+      setFavorited(res.favorited);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '操作失败');
+    }
+  }
 
   useEffect(() => {
     if (!id) return;
@@ -47,6 +64,9 @@ export default function QuizDetailPage() {
     if (getToken()) {
       authFetch<Progress>(`/quizzes/${id}/progress`)
         .then(setProgress)
+        .catch(() => undefined);
+      authFetch<{ favorited: boolean }>(`/me/favorites/check?targetType=QUIZ&targetId=${id}`)
+        .then((res) => setFavorited(res.favorited))
         .catch(() => undefined);
     }
   }, [id]);
@@ -191,6 +211,17 @@ export default function QuizDetailPage() {
                 <dd>{quiz.levelsCount}</dd>
               </div>
             </dl>
+
+            <button
+              type="button"
+              onClick={toggleFavorite}
+              className={`mt-4 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border text-[13px] transition ${
+                favorited ? 'border-brand bg-brand-soft text-brand' : 'border-black/10 text-[#475467] hover:bg-black/[0.03]'
+              }`}
+            >
+              <Heart size={14} className={favorited ? 'fill-brand text-brand' : ''} />
+              {favorited ? '已收藏' : '收藏题库'}
+            </button>
 
             {locked ? (
               <button type="button" onClick={() => requireLogin(unlock)} disabled={busy} className="btn-primary mt-5 h-10 w-full">

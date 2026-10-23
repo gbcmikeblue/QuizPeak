@@ -23,7 +23,10 @@ interface HistoryItem {
 export default function MePage() {
   const router = useRouter();
   const [me, setMe] = useState<Me | null>(null);
-  const [tab, setTab] = useState<'quiz' | 'contest' | 'settings'>('quiz');
+  const [tab, setTab] = useState<'quiz' | 'contest' | 'favorites' | 'badges' | 'settings'>('quiz');
+  const [favorites, setFavorites] = useState<Array<Record<string, unknown>>>([]);
+  const [badges, setBadges] = useState<Array<{ code: string; name: string; desc: string; icon: string; threshold: number; progress: number; achieved: boolean }>>([]);
+  const [newBadges, setNewBadges] = useState<string[]>([]);
   const [list, setList] = useState<HistoryItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -74,6 +77,19 @@ export default function MePage() {
 
   useEffect(() => {
     if (tab === 'quiz' || tab === 'contest') void loadHistory(tab);
+    if (tab === 'favorites') {
+      authFetch<Array<Record<string, unknown>>>('/me/favorites?type=quiz')
+        .then(setFavorites)
+        .catch(() => setFavorites([]));
+    }
+    if (tab === 'badges') {
+      authFetch<{ newly: string[]; list: typeof badges }>('/me/badges')
+        .then((res) => {
+          setBadges(res.list);
+          setNewBadges(res.newly);
+        })
+        .catch(() => setBadges([]));
+    }
   }, [tab, loadHistory]);
 
   async function saveProfile() {
@@ -143,6 +159,8 @@ export default function MePage() {
           [
             { key: 'quiz', label: '答题记录' },
             { key: 'contest', label: '竞赛记录' },
+            { key: 'favorites', label: '收藏' },
+            { key: 'badges', label: '徽章' },
             { key: 'settings', label: '设置' },
           ] as const
         ).map((t) => (
@@ -163,6 +181,63 @@ export default function MePage() {
 
       {error ? <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p> : null}
       {notice ? <p className="mt-3 rounded-lg bg-brand-soft px-3 py-2 text-sm text-brand">{notice}</p> : null}
+
+      {tab === 'favorites' ? (
+        <div className="mt-4 space-y-3">
+          {favorites.length === 0 ? (
+            <div className="card py-12 text-center">
+              <p className="text-sm text-[#667085]">还没有收藏题库</p>
+              <Link href="/quizzes" className="btn-primary mt-4 h-9 px-4 text-[13px]">
+                去题库逛逛
+              </Link>
+            </div>
+          ) : (
+            favorites.map((item) => (
+              <Link
+                key={String(item.id)}
+                href={`/quizzes/${item.id}`}
+                className="card flex items-center justify-between py-4 transition hover:border-brand/40"
+              >
+                <div>
+                  <p className="text-sm font-medium">{String(item.title)}</p>
+                  <p className="mt-1 text-xs text-[#98A2B3]">
+                    {String(item.levelsCount)} 关 · 解锁 {Number(item.enrollFee) > 0 ? `${item.enrollFee} 积分` : '免费'} ·{' '}
+                    {String(item.playerCount)} 人参与
+                  </p>
+                </div>
+                <span className="text-[13px] text-brand">继续答题 →</span>
+              </Link>
+            ))
+          )}
+        </div>
+      ) : null}
+
+      {tab === 'badges' ? (
+        <div className="mt-4">
+          {newBadges.length > 0 ? (
+            <p className="mb-3 rounded-lg bg-brand-soft px-3 py-2 text-sm text-brand">
+              恭喜获得新徽章：{newBadges.join('、')}
+            </p>
+          ) : null}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {badges.map((b) => (
+              <div
+                key={b.code}
+                className={`card text-center ${b.achieved ? '' : 'opacity-60'}`}
+              >
+                <div className={`mx-auto grid h-14 w-14 place-items-center rounded-2xl text-2xl ${b.achieved ? 'bg-brand-soft' : 'bg-[#F2F4F7] grayscale'}`}>
+                  {b.icon}
+                </div>
+                <p className="mt-3 text-sm font-semibold">{b.name}</p>
+                <p className="mt-1 text-xs leading-5 text-[#667085]">{b.desc}</p>
+                <p className="mt-2 text-[11px] text-[#98A2B3]">
+                  {b.achieved ? '已获得' : `进度 ${b.progress}/${b.threshold}`}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {tab === 'settings' ? (
         <div className="mt-5 grid items-start gap-5 md:grid-cols-2">
