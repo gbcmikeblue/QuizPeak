@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
@@ -34,5 +34,24 @@ export class AdminAuthService {
       },
       tokens,
     };
+  }
+
+  /** 管理员自助改密 */
+  async changePassword(adminId: string, oldPassword: string, newPassword: string) {
+    const admin = await this.prisma.adminUser.findUnique({ where: { id: adminId } });
+    if (!admin) throw new UnauthorizedException('账号不存在');
+
+    const ok = await bcrypt.compare(oldPassword, admin.passwordHash);
+    if (!ok) throw new BadRequestException('原密码不正确');
+    if (newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      throw new BadRequestException('新密码至少 8 位且包含字母和数字');
+    }
+    if (oldPassword === newPassword) throw new BadRequestException('新密码不能与原密码相同');
+
+    await this.prisma.adminUser.update({
+      where: { id: adminId },
+      data: { passwordHash: await bcrypt.hash(newPassword, 10) },
+    });
+    return { success: true };
   }
 }

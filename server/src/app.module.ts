@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { AdminArticleModule } from './admin-article/admin-article.module';
 import { AdminAuthModule } from './admin-auth/admin-auth.module';
+import { AdminConfigModule } from './admin-config/admin-config.module';
 import { AdminContestModule } from './admin-contest/admin-contest.module';
 import { AdminQuizModule } from './admin-quiz/admin-quiz.module';
 import { AdminSmsModule } from './admin-sms/admin-sms.module';
@@ -30,6 +31,7 @@ import { UsersModule } from './users/users.module';
     AdminSmsModule,
     AdminQuizModule,
     AdminContestModule,
+    AdminConfigModule,
     AdminArticleModule,
     AdminUsersModule,
     AttemptsModule,

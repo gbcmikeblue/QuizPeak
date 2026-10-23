@@ -171,6 +171,27 @@ export default function ContestsPage() {
     }
   }
 
+  async function settle(id: string) {
+    setBusy(id);
+    setError('');
+    try {
+      const res = await apiFetch<{ settled: boolean; participants?: number; awarded?: number; reason?: string }>(
+        `/admin/contests/${id}/settle`,
+        { method: 'POST', body: '{}' },
+      );
+      setNotice(
+        res.settled
+          ? `已结算：${res.participants} 人参与，发放 ${res.awarded} 人次奖励`
+          : `未结算：${res.reason ?? '无需结算'}`,
+      );
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '结算失败');
+    } finally {
+      setBusy('');
+    }
+  }
+
   async function close(id: string) {
     setBusy(id);
     try {
@@ -258,7 +279,11 @@ export default function ContestsPage() {
                           <button type="button" className="text-[#667085]" onClick={() => close(row.id)} disabled={busy === row.id}>
                             关闭
                           </button>
-                        ) : null}
+                        ) : (
+                          <button type="button" className="text-[#B7791F]" onClick={() => settle(row.id)} disabled={busy === row.id}>
+                            结算
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

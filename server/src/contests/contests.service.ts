@@ -1,4 +1,12 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  type OnModuleDestroy,
+  type OnModuleInit,
+} from '@nestjs/common';
 import { AttemptStatus, ContestStatus, PointTxType, QuestionType } from '@prisma/client';
 import { DEFAULT_RULES } from '@quizpeak/shared';
 import { PointsService } from '../points/points.service';
@@ -13,7 +21,10 @@ export interface ContestAnswerInput {
 type EffectiveStatus = 'UPCOMING' | 'RUNNING' | 'ENDED';
 
 @Injectable()
-export class ContestsService {
+export class ContestsService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(ContestsService.name);
+  private timer?: NodeJS.Timeout;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly points: PointsService,
@@ -265,27 +276,6 @@ export class ContestsService {
     const rank = ahead + 1;
     await this.prisma.contestAttempt.update({ where: { id: attemptId }, data: { rank } });
 
-    const prize = attempt.contest.prizes.find((p) => p.rank === rank);
-    let pointsEarned = 0;
-    let xpEarned = 0;
-    if (prize) {
-      pointsEarned = prize.points;
-      xpEarned = prize.xp;
-      if (pointsEarned > 0) {
-        await this.points.change({
-          userId,
-          delta: pointsEarned,
-          type: PointTxType.CONTEST_REWARD,
-          refType: 'contest-attempt',
-          refId: attemptId,
-          remark: `${attempt.contest.title} 第 ${rank} 名奖励`,
-        });
-      }
-      if (xpEarned > 0) {
-        await this.prisma.user.update({ where: { id: userId }, data: { xp: { increment: xpEarned } } });
-      }
-    }
-
     return {
       attemptId,
       score,
@@ -294,9 +284,107 @@ export class ContestsService {
       total: questionIds.length,
       totalTimeSec,
       rank,
-      pointsEarned,
-      xpEarned,
+      pointsEarned: 0,
+      xpEarned: 0,
+      pendingSettlement: true,
     };
+  }
+
+  /** 竞赛结束结算：按最终榜单发奖（幂等，可重复调用） */
+  async settle(contestId: string) {
+    const contest = await this.prisma.contest.findUnique({
+      where: { id: contestId },
+      include: { prizes: { orderBy: { rank: 'asc' } } },
+    });
+    if (!contest) throw new NotFoundException('竞赛不存在');
+    if (contest.status === ContestStatus.SETTLED) return { settled: false, reason: '已结算过' };
+
+    const attempts = await this.prisma.contestAttempt.findMany({
+      where: { contestId, status: AttemptStatus.FINISHED },
+      orderBy: [{ score: 'desc' }, { totalTimeSec: 'asc' }, { finishedAt: 'asc' }],
+    });
+
+    // 重算排名：同分比用时，二者都相同则并列
+    let currentRank = 0;
+    let prevKey = '';
+    const ranked = attempts.map((attempt, index) => {
+      const key = `${attempt.score}-${attempt.totalTimeSec}`;
+      if (key !== prevKey) {
+        currentRank = index + 1;
+        prevKey = key;
+      }
+      return { attempt, rank: currentRank };
+    });
+
+    for (const item of ranked) {
+      await this.prisma.contestAttempt.update({ where: { id: item.attempt.id }, data: { rank: item.rank } });
+    }
+
+    let awarded = 0;
+    for (const prize of contest.prizes) {
+      for (const winner of ranked.filter((x) => x.rank === prize.rank)) {
+        const done = await this.prisma.pointTransaction.findFirst({
+          where: {
+            userId: winner.attempt.userId,
+            type: PointTxType.CONTEST_REWARD,
+            refType: 'contest',
+            refId: contestId,
+          },
+        });
+        if (done) continue;
+
+        if (prize.points > 0) {
+          await this.points.change({
+            userId: winner.attempt.userId,
+            delta: prize.points,
+            type: PointTxType.CONTEST_REWARD,
+            refType: 'contest',
+            refId: contestId,
+            remark: `${contest.title} 第 ${prize.rank} 名奖励`,
+          });
+        }
+        if (prize.xp > 0) {
+          await this.prisma.user.update({
+            where: { id: winner.attempt.userId },
+            data: { xp: { increment: prize.xp } },
+          });
+        }
+        awarded += 1;
+      }
+    }
+
+    await this.prisma.contest.update({ where: { id: contestId }, data: { status: ContestStatus.SETTLED } });
+    return { settled: true, participants: ranked.length, awarded };
+  }
+
+  /** 服务启动后每 5 分钟扫描一次：已到结束时间且未结算的竞赛自动结算 */
+  onModuleInit(): void {
+    this.timer = setInterval(() => void this.autoSettle(), 5 * 60 * 1000);
+  }
+
+  onModuleDestroy(): void {
+    if (this.timer) clearInterval(this.timer);
+  }
+
+  private async autoSettle(): Promise<void> {
+    try {
+      const due = await this.prisma.contest.findMany({
+        where: {
+          status: { in: [ContestStatus.RUNNING, ContestStatus.ENDED] },
+          endAt: { lt: new Date() },
+        },
+        select: { id: true, title: true },
+        take: 20,
+      });
+      for (const item of due) {
+        const res = await this.settle(item.id);
+        if (res.settled) {
+          this.logger.log(`自动结算竞赛 ${item.title}: ${res.participants} 人参与，发奖 ${res.awarded} 人次`);
+        }
+      }
+    } catch (error) {
+      this.logger.error(`自动结算失败：${(error as Error).message}`);
+    }
   }
 
   private effectiveStatus(startAt: Date, endAt: Date, status: ContestStatus): EffectiveStatus {

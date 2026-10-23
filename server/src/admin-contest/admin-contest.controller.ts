@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { Public } from '../common/decorators/public.decorator';
 import { AdminAuthGuard } from '../common/guards/admin-auth.guard';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { ContestsService } from '../contests/contests.service';
 import { AdminContestService, type ContestUpsert } from './admin-contest.service';
 
 const upsertSchema = z.object({
@@ -34,7 +35,10 @@ const pickSchema = z.object({
 @UseGuards(AdminAuthGuard)
 @Controller('admin/contests')
 export class AdminContestController {
-  constructor(private readonly contests: AdminContestService) {}
+  constructor(
+    private readonly contests: AdminContestService,
+    private readonly contestOps: ContestsService,
+  ) {}
 
   @Get()
   list(
@@ -73,5 +77,11 @@ export class AdminContestController {
   @Post(':id/close')
   close(@Param('id') id: string) {
     return this.contests.close(id);
+  }
+
+  /** 手动结算：按最终榜单发奖（幂等） */
+  @Post(':id/settle')
+  settle(@Param('id') id: string) {
+    return this.contestOps.settle(id);
   }
 }

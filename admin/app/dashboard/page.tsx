@@ -10,12 +10,16 @@ interface Health {
   time: string;
 }
 
-const METRICS = [
-  { label: '今日新增用户', value: '—', hint: '待接入统计接口', icon: Users },
-  { label: '今日答题次数', value: '—', hint: '待接入统计接口', icon: Trophy },
-  { label: '今日发放积分', value: '—', hint: '待接入统计接口', icon: Coins },
-  { label: '待回工单 / 待办', value: '—', hint: '待接入统计接口', icon: RefreshCw },
-];
+interface DashboardStats {
+  users: number;
+  todayUsers: number;
+  attempts: number;
+  todayAttempts: number;
+  pointsToday: number;
+  contests: number;
+  quizzes: number;
+  pendingSettle: number;
+}
 
 const DONE = [
   'monorepo 骨架（packages/shared、packages/i18n、server、admin）',
@@ -39,9 +43,13 @@ const TODO = [
 
 export default function DashboardPage() {
   const [health, setHealth] = useState<Health | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
+    apiFetch<DashboardStats>('/admin/dashboard')
+      .then(setStats)
+      .catch(() => undefined);
     apiFetch<Health>('/health')
       .then(setHealth)
       .catch((e: Error) => setError(e.message));
@@ -57,13 +65,18 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {METRICS.map(({ label, value, hint, icon: Icon }) => (
+        {[
+          { label: '今日新增用户', value: stats?.todayUsers, hint: `累计 ${stats?.users ?? 0} 位用户`, icon: Users },
+          { label: '今日答题次数', value: stats?.todayAttempts, hint: `累计 ${stats?.attempts ?? 0} 次交卷`, icon: Trophy },
+          { label: '今日发放积分', value: stats?.pointsToday, hint: '含签到/广告/点赞/活动/答题', icon: Coins },
+          { label: '待结算竞赛', value: stats?.pendingSettle, hint: `共 ${stats?.contests ?? 0} 场竞赛`, icon: RefreshCw },
+        ].map(({ label, value, hint, icon: Icon }) => (
           <div key={label} className="card">
             <div className="flex items-center justify-between">
               <span className="text-[13px] text-[#667085]">{label}</span>
               <Icon size={16} className="text-brand" />
             </div>
-            <p className="mt-3 text-2xl font-semibold">{value}</p>
+            <p className="mt-3 text-2xl font-semibold">{value ?? '—'}</p>
             <p className="mt-1 text-xs text-[#98A2B3]">{hint}</p>
           </div>
         ))}

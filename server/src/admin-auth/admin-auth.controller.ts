@@ -12,6 +12,11 @@ const loginSchema = z.object({
   password: z.string().min(6).max(64),
 });
 
+const passwordSchema = z.object({
+  oldPassword: z.string().min(6).max(64),
+  newPassword: z.string().min(8, '新密码至少 8 位').max(64),
+});
+
 // 后台接口由 AdminAuthGuard 单独鉴权，需绕过全局用户守卫
 @Public()
 @Controller('admin/auth')
@@ -29,5 +34,15 @@ export class AdminAuthController {
   @Get('me')
   me(@CurrentAdmin() admin: AdminUser) {
     return { id: admin.id, username: admin.username, name: admin.name, role: admin.role };
+  }
+
+  @UseGuards(AdminAuthGuard)
+  @Post('password')
+  @HttpCode(200)
+  changePassword(
+    @CurrentAdmin() admin: AdminUser,
+    @Body(new ZodValidationPipe(passwordSchema)) body: { oldPassword: string; newPassword: string },
+  ) {
+    return this.auth.changePassword(admin.id, body.oldPassword, body.newPassword);
   }
 }

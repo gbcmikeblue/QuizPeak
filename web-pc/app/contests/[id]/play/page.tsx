@@ -118,7 +118,11 @@ export default function ContestPlayPage() {
             <p className="mt-3 inline-flex items-center gap-1 rounded-full bg-brand-soft px-3 py-1 text-sm text-[#0B3B27]">
               <Trophy size={14} className="text-[#F5A623]" /> 当前第 {result.rank} 名
             </p>
-            {result.pointsEarned > 0 ? (
+            {result.pendingSettlement ? (
+              <p className="mt-2 text-xs leading-5 text-[#98A2B3]">
+                竞赛结束后按最终榜单统一结算并发奖，名次可能随他人成绩变化
+              </p>
+            ) : result.pointsEarned > 0 ? (
               <p className="mt-2 text-sm text-brand">
                 获得 {result.pointsEarned} 积分 · {result.xpEarned} XP
               </p>

@@ -140,6 +140,8 @@ export interface ContestFinish {
   rank: number;
   pointsEarned: number;
   xpEarned: number;
+  /** 竞赛交卷后不立即发奖，等结束后统一结算 */
+  pendingSettlement?: boolean;
 }
 
 export interface ReviewData {
