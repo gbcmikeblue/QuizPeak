@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { permissionsOf, ROLE_LABELS } from '../common/admin-permissions';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenService } from '../auth/token.service';
 
@@ -31,6 +32,8 @@ export class AdminAuthService {
         username: admin.username,
         name: admin.name,
         role: admin.role,
+        roleLabel: ROLE_LABELS[admin.role] ?? admin.role,
+        permissions: permissionsOf(admin.role),
       },
       tokens,
     };

@@ -4,6 +4,7 @@ import { Public } from '../common/decorators/public.decorator';
 import { AdminAuthGuard } from '../common/guards/admin-auth.guard';
 import { CurrentAdmin } from '../common/decorators/current-admin.decorator';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { permissionsOf, ROLE_LABELS } from '../common/admin-permissions';
 import { AdminAuthService } from './admin-auth.service';
 import type { AdminUser } from '@prisma/client';
 
@@ -33,7 +34,14 @@ export class AdminAuthController {
   @UseGuards(AdminAuthGuard)
   @Get('me')
   me(@CurrentAdmin() admin: AdminUser) {
-    return { id: admin.id, username: admin.username, name: admin.name, role: admin.role };
+    return {
+      id: admin.id,
+      username: admin.username,
+      name: admin.name,
+      role: admin.role,
+      roleLabel: ROLE_LABELS[admin.role] ?? admin.role,
+      permissions: permissionsOf(admin.role),
+    };
   }
 
   @UseGuards(AdminAuthGuard)

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Loader2, Plus, Save, Trash2 } from 'lucide-react';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, getAdminProfile } from '@/lib/api';
 
 interface ConfigItem {
   key: string;
@@ -60,6 +60,12 @@ export default function TasksPage() {
   const [confirm, setConfirm] = useState<
     { kind: 'create' } | { kind: 'delete'; id: string; title: string } | null
   >(null);
+  /** 积分数值的修改需要 system 权限；运营（仅 tasks）只能查看 */
+  const [canEditRules, setCanEditRules] = useState(false);
+
+  useEffect(() => {
+    setCanEditRules((getAdminProfile()?.permissions ?? []).includes('system'));
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -188,8 +194,19 @@ export default function TasksPage() {
 
       <div className="card">
         <div className="flex items-center justify-between">
-          <h2 className="text-[15px] font-semibold">积分规则</h2>
-          <button type="button" className="btn-primary h-9 px-4 text-[13px]" onClick={saveConfig} disabled={busy === 'config'}>
+          <div>
+            <h2 className="text-[15px] font-semibold">积分规则</h2>
+            {!canEditRules ? (
+              <p className="mt-1 text-[11px] text-[#B7791F]">当前角色仅可查看数值，修改需要「系统设置」权限</p>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            className="btn-primary h-9 px-4 text-[13px]"
+            onClick={saveConfig}
+            disabled={busy === 'config' || !canEditRules}
+            title={canEditRules ? '保存积分数值' : '需要系统设置权限'}
+          >
             {busy === 'config' ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
             保存
           </button>
@@ -201,6 +218,7 @@ export default function TasksPage() {
               <input
                 type="number"
                 className="input"
+                disabled={!canEditRules}
                 value={String(item.value)}
                 onChange={(e) => {
                   const next = [...items];

@@ -23,7 +23,13 @@ export function clearToken(): void {
   window.localStorage.removeItem(ADMIN_KEY);
 }
 
-export function getAdminProfile(): { name?: string; role?: string; username?: string } | null {
+export function getAdminProfile(): {
+  name?: string;
+  role?: string;
+  roleLabel?: string;
+  username?: string;
+  permissions?: string[];
+} | null {
   if (typeof window === 'undefined') return null;
   const raw = window.localStorage.getItem(ADMIN_KEY);
   if (!raw) return null;
