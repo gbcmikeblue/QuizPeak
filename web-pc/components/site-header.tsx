@@ -59,15 +59,24 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-1 rounded-full bg-brand-soft px-2 py-1.5 md:flex">
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="rounded-full px-3.5 py-1.5 text-sm text-[#344054] transition hover:bg-white"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {NAV.map((item) => {
+            // 当前路径命中（含子路由，如 /quizzes/xxx）即高亮
+            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? 'page' : undefined}
+                className={`rounded-full px-3.5 py-1.5 text-sm transition ${
+                  active
+                    ? 'bg-white font-medium text-brand shadow-[0_1px_2px_rgba(16,24,40,0.06)]'
+                    : 'text-[#344054] hover:bg-white'
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="flex items-center gap-2.5">

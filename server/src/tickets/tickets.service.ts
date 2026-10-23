@@ -72,7 +72,8 @@ export class TicketsService {
       status: ticket.status,
       priority: ticket.priority,
       createdAt: ticket.createdAt,
-      user: ticket.user,
+      // 手机号默认脱敏，需要完整号走 POST /admin/reveal-phone（会写审计）
+      user: { ...ticket.user, phone: ticket.user.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') },
       replies: ticket.replies.map((r) => ({
         id: r.id,
         authorType: r.authorType,

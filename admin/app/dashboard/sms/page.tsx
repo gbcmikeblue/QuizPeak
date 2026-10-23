@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Copy, RefreshCw, ShieldAlert } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { RevealPhone } from '@/components/reveal-phone';
 
 interface SmsRow {
   id: string;
@@ -148,7 +149,9 @@ export default function SmsPage() {
                   <td className="whitespace-nowrap text-xs text-[#667085]">
                     {new Date(row.createdAt).toLocaleString('zh-CN')}
                   </td>
-                  <td className="font-medium">{row.phone}</td>
+                  <td className="font-medium">
+                    <RevealPhone source="SMS" id={row.id} masked={row.phone} />
+                  </td>
                   <td className="text-xs">{row.scene}</td>
                   <td>
                     <button

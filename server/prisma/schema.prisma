@@ -140,6 +140,25 @@ model AdminUser {
   createdAt    DateTime  @default(now())
 }
 
+/// 后台敏感操作审计（查看完整手机号等）
+model AuditLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  adminName  String
+  /// 动作标识：REVEAL_PHONE
+  action     String
+  /// 目标类型：USER / TICKET / SMS
+  targetType String
+  targetId   String
+  /// 补充说明（如查看原因、被查看手机号后四位）
+  detail     String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([action, createdAt])
+  @@index([targetType, targetId])
+}
+
 model SmsCode {
   id        String   @id @default(cuid())
   phone     String

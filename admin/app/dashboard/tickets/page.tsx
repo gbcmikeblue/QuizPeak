@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Loader2, RefreshCw, Send } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { RevealPhone } from '@/components/reveal-phone';
 
 interface Row {
   id: string;
@@ -158,7 +159,9 @@ export default function TicketsPage() {
                 <div>
                   <h2 className="text-[15px] font-semibold">{active.subject}</h2>
                   <p className="mt-1 text-xs text-[#98A2B3]">
-                    {active.user.nickname ?? active.user.username} · {new Date(active.createdAt).toLocaleString('zh-CN')}
+                    {active.user.nickname ?? active.user.username} ·{' '}
+                    <RevealPhone source="TICKET" id={active.id} masked={active.user.phone} /> ·{' '}
+                    {new Date(active.createdAt).toLocaleString('zh-CN')}
                   </p>
                 </div>
                 <div className="flex gap-2">

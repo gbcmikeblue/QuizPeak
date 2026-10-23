@@ -12,6 +12,7 @@ import {
   MessageSquareText,
   Search,
   Settings,
+  ShieldCheck,
   Trophy,
   Users,
 } from 'lucide-react';
@@ -26,6 +27,7 @@ const NAV = [
   { href: '/dashboard/points', label: '积分流水', icon: Coins },
   { href: '/dashboard/tasks', label: '积分任务', icon: Megaphone },
   { href: '/dashboard/search-history', label: '搜索记录', icon: Search },
+  { href: '/dashboard/audit-logs', label: '操作审计', icon: ShieldCheck },
   { href: '/dashboard/sms', label: '短信记录', icon: MessageSquareText },
   { href: '/dashboard/tickets', label: '客服工单', icon: LifeBuoy },
   { href: '/dashboard/articles', label: '内容管理', icon: BookOpen },

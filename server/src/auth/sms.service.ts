@@ -79,7 +79,8 @@ export class SmsService {
     return {
       list: rows.map((r) => ({
         id: r.id,
-        phone: r.phone,
+        // 手机号默认脱敏；完整号走 POST /admin/reveal-phone（写审计）
+        phone: r.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2'),
         scene: r.scene,
         code: this.devMode ? r.code : `${r.code.slice(0, 2)}****`,
         used: r.used,

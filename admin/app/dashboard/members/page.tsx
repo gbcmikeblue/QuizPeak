@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Loader2, RefreshCw, Search, UserRound } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { RevealPhone } from '@/components/reveal-phone';
 
 interface Row {
   id: string;
@@ -284,7 +285,7 @@ export default function MembersPage() {
                 <div>
                   <p className="font-semibold">{detail.nickname ?? detail.username}</p>
                   <p className="text-xs text-[#667085]">
-                    {detail.phone} · {detail.username} · Lv.{detail.level}
+                    <RevealPhone source="USER" id={detail.id} masked={detail.phone} /> · {detail.username} · Lv.{detail.level}
                   </p>
                 </div>
               </div>
