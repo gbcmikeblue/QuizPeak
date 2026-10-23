@@ -1,10 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { TicketStatus } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.module';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class TicketsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   /** 用户侧：我的工单 */
   async mine(userId: string, page = 1, pageSize = 10) {
@@ -91,6 +95,9 @@ export class TicketsService {
         data: { status: authorType === 'USER' && ticket.status === 'CLOSED' ? 'OPEN' : ticket.status },
       }),
     ]);
+    if (authorType === 'ADMIN') {
+      await this.notifications.push(ticket.userId, 'TICKET', '客服回复了你的工单', content.slice(0, 80), '/support');
+    }
     return { ok: true };
   }
 

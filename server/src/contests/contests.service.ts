@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { AttemptStatus, ContestStatus, PointTxType, QuestionType } from '@prisma/client';
 import { DEFAULT_RULES } from '@quizpeak/shared';
+import { NotificationsService } from '../notifications/notifications.module';
 import { PointsService } from '../points/points.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -28,6 +29,7 @@ export class ContestsService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly prisma: PrismaService,
     private readonly points: PointsService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async list(params: { status?: string; page?: number; pageSize?: number }) {
@@ -349,6 +351,13 @@ export class ContestsService implements OnModuleInit, OnModuleDestroy {
             data: { xp: { increment: prize.xp } },
           });
         }
+        await this.notifications.push(
+          winner.attempt.userId,
+          'CONTEST',
+          `${contest.title} 已结算`,
+          `最终第 ${prize.rank} 名，发放 ${prize.points} 积分与 ${prize.xp} XP`,
+          `/contests/${contestId}`,
+        );
         awarded += 1;
       }
     }

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Bell, Search, Star, UserRound } from 'lucide-react';
 import { BRAND } from '@quizpeak/shared';
-import { clearToken, fetchMe, getToken, type Me } from '@/lib/auth';
+import { authFetch, clearToken, fetchMe, getToken, type Me } from '@/lib/auth';
 
 const NAV = [
   { href: '/quizzes', label: '答题' },
@@ -20,6 +20,7 @@ export function SiteHeader() {
   const [me, setMe] = useState<Me | null>(null);
   const [ready, setReady] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
   const pathname = usePathname();
 
   // 依赖路由变化重新读取登录态：登录/退出后无需手动刷新页面
@@ -36,6 +37,11 @@ export function SiteHeader() {
       setMe(data);
       setReady(true);
     });
+    authFetch<{ unread: number }>('/notifications?page=1')
+      .then((res) => {
+        if (alive) setUnread(res.unread);
+      })
+      .catch(() => undefined);
     return () => {
       alive = false;
     };
@@ -68,9 +74,18 @@ export function SiteHeader() {
           <button className="hidden h-9 w-9 place-items-center rounded-full border border-black/5 text-[#475467] sm:grid">
             <Search size={16} />
           </button>
-          <button className="hidden h-9 w-9 place-items-center rounded-full border border-black/5 text-[#475467] sm:grid">
+          <Link
+            href="/notifications"
+            className="relative hidden h-9 w-9 place-items-center rounded-full border border-black/5 text-[#475467] sm:grid"
+            title={unread > 0 ? `${unread} 条未读通知` : '通知'}
+          >
             <Bell size={16} />
-          </button>
+            {unread > 0 ? (
+              <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
+                {unread > 99 ? '99+' : unread}
+              </span>
+            ) : null}
+          </Link>
 
           {ready && me ? (
             <>
