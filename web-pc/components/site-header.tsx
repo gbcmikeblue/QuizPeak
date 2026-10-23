@@ -71,9 +71,13 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2.5">
-          <button className="hidden h-9 w-9 place-items-center rounded-full border border-black/5 text-[#475467] sm:grid">
+          <Link
+            href="/search"
+            className="hidden h-9 w-9 place-items-center rounded-full border border-black/5 text-[#475467] transition hover:border-brand/40 hover:text-brand sm:grid"
+            title="搜索题库 / 竞赛 / 文章"
+          >
             <Search size={16} />
-          </button>
+          </Link>
           <Link
             href="/notifications"
             className="relative hidden h-9 w-9 place-items-center rounded-full border border-black/5 text-[#475467] sm:grid"

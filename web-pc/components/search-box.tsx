@@ -17,13 +17,23 @@ interface HistoryItem {
 
 const TYPE_LABEL: Record<string, string> = { QUIZ: '题库', CONTEST: '竞赛', ARTICLE: '文章', HOT: '热词' };
 
-export function SearchBox({ placeholder = '搜索题库、竞赛、文章…' }: { placeholder?: string }) {
+export function SearchBox({
+  placeholder = '搜索题库、竞赛、文章…',
+  onSearch,
+  autoFocus = false,
+}: {
+  placeholder?: string;
+  /** 传入后由调用方接管跳转（如在搜索结果页内直接刷新结果） */
+  onSearch?: (keyword: string) => void;
+  autoFocus?: boolean;
+}) {
   const router = useRouter();
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   const [suggest, setSuggest] = useState<SuggestItem[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const boxRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const loadHistory = useCallback(async () => {
     if (!getToken()) {
@@ -40,6 +50,16 @@ export function SearchBox({ placeholder = '搜索题库、竞赛、文章…' }:
   useEffect(() => {
     void loadHistory();
   }, [loadHistory]);
+
+  // 从顶部导航点搜索图标跳转过来时（/?focus=search），自动聚焦并展开
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('focus') === 'search') {
+      setOpen(true);
+      inputRef.current?.focus();
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -65,6 +85,10 @@ export function SearchBox({ placeholder = '搜索题库、竞赛、文章…' }:
     if (!word) return;
     if (getToken()) void authFetch('/search/history', { method: 'POST', body: JSON.stringify({ keyword: word }) }).catch(() => undefined);
     setOpen(false);
+    if (onSearch) {
+      onSearch(word);
+      return;
+    }
     router.push(`/search?q=${encodeURIComponent(word)}`);
   }
 
@@ -83,6 +107,8 @@ export function SearchBox({ placeholder = '搜索题库、竞赛、文章…' }:
       <div className="flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2.5 shadow-sm focus-within:border-brand">
         <Search size={16} className="shrink-0 text-[#98A2B3]" />
         <input
+          ref={inputRef}
+          autoFocus={autoFocus}
           className="w-full bg-transparent text-sm outline-none placeholder:text-[#98A2B3]"
           placeholder={placeholder}
           value={q}
@@ -97,10 +123,27 @@ export function SearchBox({ placeholder = '搜索题库、竞赛、文章…' }:
           }}
         />
         {q ? (
-          <button type="button" onClick={() => setQ('')} className="shrink-0 text-[#98A2B3] hover:text-[#475467]">
+          <button
+            type="button"
+            onClick={() => {
+              setQ('');
+              inputRef.current?.focus();
+            }}
+            className="shrink-0 text-[#98A2B3] transition hover:text-[#475467]"
+            title="清空"
+          >
             <X size={15} />
           </button>
         ) : null}
+        <button
+          type="button"
+          onClick={() => go(q)}
+          disabled={!q.trim()}
+          className="shrink-0 rounded-full bg-brand px-3 py-1 text-[12px] font-medium text-white transition hover:bg-brand-deep disabled:cursor-not-allowed disabled:bg-[#EDF0EE] disabled:text-[#98A2B3]"
+          title="搜索"
+        >
+          搜索
+        </button>
       </div>
 
       {open ? (

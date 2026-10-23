@@ -9,6 +9,8 @@
     "allowSyntheticDefaultImports": true,
     "outDir": "./dist",
     "rootDir": "./src",
+    "incremental": true,
+    "tsBuildInfoFile": "../.cache/ts-server.tsbuildinfo",
     "strictPropertyInitialization": false,
     "types": ["node"]
   },

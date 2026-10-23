@@ -77,13 +77,27 @@ npm run dev -w @quizpeak/web-pc # http://localhost:3000
 | 新人礼 | +100 | 1 次 |
 | 邀请好友 | +100（被邀请人通过首个关卡后） | 每邀请 1 人 1 次 |
 
+## 日常开发（推荐，改代码不用构建）
+
+```bash
+npm run db:local           # 终端 1：本地数据库
+npm run dev:all            # 终端 2：api(watch) + web(dev) + admin(dev)
+npm run verify             # 任意终端：200ms 探活四个服务
+npm run clean              # 需要时清理 .next / dist / .cache（直接删除，不进回收站）
+```
+
+- 前端改完 **HMR 秒级生效**，服务端改完 **watch 自动重启**，都不需要 `build`
+- 生产构建只在发版前执行：`npm run build -w @quizpeak/server && npm run build -w @quizpeak/admin && npm run build -w @quizpeak/web-pc`
+- 实测：旧方式（每次 build + 重启 + 固定等待）约 65s，新方式约 3s
+- 详细说明与踩坑清单见 `doc/05-技术选型与架构方案.md` 第 10.1 节
+
 ## 常用命令
 
 ```bash
 npm run typecheck          # 类型检查
-npm run build:server       # 编译 API
-npm run build:admin        # 构建后台
-npm run db:generate        # prisma generate
+npm run build:server       # 编译 API（发版前用；日常用 dev:all）
+npm run build:admin        # 构建后台（发版前用）
+npm run db:generate        # prisma generate（仅 schema 变更后需要）
 npm run db:migrate         # prisma migrate dev
 npm run db:seed            # 初始化数据
 ```

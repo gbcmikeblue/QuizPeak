@@ -39,3 +39,4 @@ Thumbs.db
 .codebuddy/
 data/
 .dev/
+.cache/

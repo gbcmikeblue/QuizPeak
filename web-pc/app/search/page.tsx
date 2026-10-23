@@ -72,7 +72,13 @@ export default function SearchPage() {
           <h1 className="text-2xl font-bold">搜索</h1>
           {q ? <span className="text-sm text-[#667085]">「{q}」共 {data?.total ?? 0} 条结果</span> : null}
         </div>
-        <SearchBox />
+        <SearchBox
+          autoFocus={!q}
+          onSearch={(keyword) => {
+            window.history.replaceState(null, '', `/search?q=${encodeURIComponent(keyword)}`);
+            setQ(keyword);
+          }}
+        />
       </div>
 
       {loading ? (
