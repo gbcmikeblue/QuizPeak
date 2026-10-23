@@ -203,6 +203,77 @@ export function QuizEditor({ quizId }: { quizId?: string }) {
     }
   }
 
+  /** 把 base64 的 xlsx 触发浏览器下载 */
+  function downloadBase64(filename: string, base64: string) {
+    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+    const url = URL.createObjectURL(
+      new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+    );
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function downloadTemplate() {
+    setError('');
+    try {
+      const res = await apiFetch<{ filename: string; base64: string }>('/admin/quizzes/import-template');
+      downloadBase64(res.filename, res.base64);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '下载失败');
+    }
+  }
+
+  async function exportExcel() {
+    setBusy('export');
+    setError('');
+    try {
+      const res = await apiFetch<{ filename: string; base64: string; count: number }>(`/admin/quizzes/${quizId}/export`);
+      downloadBase64(res.filename, res.base64);
+      setNotice(`已导出 ${res.count} 道题`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '导出失败');
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function importExcel(file: File) {
+    setBusy('import');
+    setError('');
+    setNotice('');
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error('读取文件失败'));
+        reader.readAsDataURL(file);
+      });
+      const res = await apiFetch<{
+        created: number;
+        failed: number;
+        levelsCreated: number;
+        errors: Array<{ row: number; message: string }>;
+      }>(`/admin/quizzes/${quizId}/import`, { method: 'POST', body: JSON.stringify({ fileBase64: base64 }) });
+
+      setNotice(
+        `导入完成：新增 ${res.created} 道题` +
+          (res.levelsCreated ? `，自动创建 ${res.levelsCreated} 个关卡` : '') +
+          (res.failed ? `，${res.failed} 行失败` : ''),
+      );
+      if (res.errors.length) {
+        setError(res.errors.map((x) => `第 ${x.row} 行：${x.message}`).join('；'));
+      }
+      await loadQuestions();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '导入失败');
+    } finally {
+      setBusy('');
+    }
+  }
+
   async function removeQuestion(id: string) {
     setBusy(id);
     try {
@@ -436,7 +507,38 @@ export function QuizEditor({ quizId }: { quizId?: string }) {
       ) : null}
 
       {tab === 'questions' ? (
-        <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
+        <>
+          <div className="card mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-[15px] font-semibold">Excel 批量导入 / 导出</h2>
+              <p className="mt-1 text-[11px] text-[#98A2B3]">
+                列：关卡号 / 题型 / 题干 / 选项A~D / 正确答案 / 解析 / 分值；关卡不存在会自动创建
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" className="btn-ghost h-9 px-3 text-[12px]" onClick={downloadTemplate}>
+                下载模板
+              </button>
+              <label className="btn-ghost h-9 cursor-pointer px-3 text-[12px]">
+                导入 Excel
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) void importExcel(file);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+              <button type="button" className="btn-ghost h-9 px-3 text-[12px]" onClick={exportExcel} disabled={busy === 'export'}>
+                {busy === 'export' ? '导出中…' : '导出 Excel'}
+              </button>
+            </div>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
           <div className="card space-y-3">
             <h2 className="text-[15px] font-semibold">新增题目</h2>
             <div>
@@ -536,7 +638,8 @@ export function QuizEditor({ quizId }: { quizId?: string }) {
               )}
             </div>
           </div>
-        </div>
+          </div>
+        </>
       ) : null}
     </div>
   );

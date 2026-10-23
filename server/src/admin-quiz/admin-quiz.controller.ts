@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { z } from 'zod';
 import {
   adminLevelGenerateSchema,
   adminQuestionSchema,
@@ -10,13 +11,17 @@ import {
 import { Public } from '../common/decorators/public.decorator';
 import { AdminAuthGuard } from '../common/guards/admin-auth.guard';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { AdminQuizExcelService } from './admin-quiz-excel.service';
 import { AdminQuizService } from './admin-quiz.service';
 
 @Public()
 @UseGuards(AdminAuthGuard)
 @Controller('admin')
 export class AdminQuizController {
-  constructor(private readonly quiz: AdminQuizService) {}
+  constructor(
+    private readonly quiz: AdminQuizService,
+    private readonly excel: AdminQuizExcelService,
+  ) {}
 
   @Get('categories')
   categories() {
@@ -37,6 +42,25 @@ export class AdminQuizController {
   @Post('quizzes')
   create(@Body(new ZodValidationPipe(adminQuizUpsertSchema)) body: AdminQuizUpsertInput) {
     return this.quiz.create(body);
+  }
+
+  /** 下载空白模板（必须定义在 quizzes/:id 之前） */
+  @Get('quizzes/import-template')
+  template() {
+    return this.excel.template();
+  }
+
+  @Get('quizzes/:id/export')
+  exportQuiz(@Param('id') id: string) {
+    return this.excel.exportQuiz(id);
+  }
+
+  @Post('quizzes/:id/import')
+  importQuiz(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(z.object({ fileBase64: z.string().min(10) }))) body: { fileBase64: string },
+  ) {
+    return this.excel.importQuiz(id, body.fileBase64);
   }
 
   @Get('quizzes/:id')
