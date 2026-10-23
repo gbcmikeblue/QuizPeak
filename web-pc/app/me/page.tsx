@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Loader2, Star } from 'lucide-react';
 import { authFetch, fetchMe, getToken, type Me } from '@/lib/auth';
+import { AVATAR_PREFIX, AVATAR_PRESETS, avatarOf } from '@/lib/avatars';
+import { API_BASE } from '@/lib/api';
 
 interface HistoryItem {
   id: string;
@@ -34,6 +36,8 @@ export default function MePage() {
   const [notice, setNotice] = useState('');
   const [profile, setProfile] = useState({ nickname: '', firstName: '', lastName: '', address: '' });
   const [pwd, setPwd] = useState({ oldPassword: '', newPassword: '' });
+  const [avatar, setAvatar] = useState('');
+  const [avatarList, setAvatarList] = useState<Array<{ emoji: string; isDefault: boolean }>>([]);
   const [busy, setBusy] = useState('');
 
   const loadHistory = useCallback(async (type: 'quiz' | 'contest') => {
@@ -47,6 +51,14 @@ export default function MePage() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // 头像库由后台维护，前台只读
+  useEffect(() => {
+    fetch(`${API_BASE}/avatars`)
+      .then((r) => r.json())
+      .then((j) => setAvatarList(Array.isArray(j?.data) ? j.data : []))
+      .catch(() => undefined);
   }, []);
 
   // 支持 /me?tab=badges 这类深链（通知、头像菜单会带参数跳过来）
@@ -65,6 +77,7 @@ export default function MePage() {
     fetchMe().then((data) => {
       setMe(data);
       if (data) {
+        setAvatar(data.avatar ?? '');
         setProfile({
           nickname: data.nickname ?? '',
           firstName: '',
@@ -105,7 +118,7 @@ export default function MePage() {
     setError('');
     setNotice('');
     try {
-      await authFetch('/me', { method: 'PATCH', body: JSON.stringify(profile) });
+      await authFetch('/me', { method: 'PATCH', body: JSON.stringify({ ...profile, avatar }) });
       setNotice('资料已保存');
       setMe(await fetchMe());
     } catch (e) {
@@ -138,8 +151,8 @@ export default function MePage() {
     <main className="container-page py-8">
       <section className="card flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <span className="grid h-16 w-16 place-items-center rounded-full bg-brand-soft text-xl font-semibold text-[#0B3B27]">
-            {(me.nickname ?? me.username).slice(0, 1)}
+          <span className="grid h-16 w-16 place-items-center overflow-hidden rounded-full bg-brand-soft text-xl font-semibold text-[#0B3B27]">
+            {avatarOf(me.avatar, me.nickname ?? me.username).emoji ?? avatarOf(me.avatar, me.nickname ?? me.username).letter}
           </span>
           <div>
             <p className="text-lg font-semibold">{me.nickname ?? me.username}</p>
@@ -255,6 +268,40 @@ export default function MePage() {
               <span className="text-xs text-[#98A2B3]">昵称会显示在排行榜</span>
             </div>
             <div className="mt-5 space-y-4">
+              <div>
+                <label className="label">头像</label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAvatar('')}
+                    className={`grid h-10 w-10 place-items-center rounded-full border text-sm font-semibold transition ${
+                      avatar === '' ? 'border-brand bg-brand-soft text-brand ring-2 ring-brand/20' : 'border-black/10 bg-white text-[#475467]'
+                    }`}
+                    title="使用昵称首字母"
+                  >
+                    {(me.nickname ?? me.username).slice(0, 1)}
+                  </button>
+                  {(avatarList.length ? avatarList.map((x) => x.emoji) : AVATAR_PRESETS).map((emoji) => {
+                    const value = `${AVATAR_PREFIX}${emoji}`;
+                    const active = avatar === value;
+                    return (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => setAvatar(value)}
+                        className={`grid h-10 w-10 place-items-center rounded-full border text-xl transition ${
+                          active ? 'border-brand bg-brand-soft ring-2 ring-brand/20' : 'border-black/10 bg-white hover:bg-black/[0.03]'
+                        }`}
+                        title="选这个头像"
+                      >
+                        {emoji}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-1 text-[11px] text-[#98A2B3]">从固定列表中选择，保存资料后生效（约 2 秒刷新全站）</p>
+              </div>
+
             {(
               [
                 { key: 'nickname', label: '昵称' },

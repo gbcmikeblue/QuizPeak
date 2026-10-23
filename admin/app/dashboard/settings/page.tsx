@@ -40,6 +40,69 @@ const LABEL: Record<string, string> = {
 export default function SettingsPage() {
   const [items, setItems] = useState<ConfigItem[]>([]);
   const [badges, setBadges] = useState<Badge[]>([]);
+  const [avatars, setAvatars] = useState<Array<{ id: string; emoji: string; isDefault: boolean; enabled: boolean; usageCount: number }>>([]);
+  const [newEmoji, setNewEmoji] = useState('');
+
+  const loadAvatars = useCallback(async () => {
+    try {
+      setAvatars(await apiFetch<Array<{ id: string; emoji: string; isDefault: boolean; enabled: boolean; usageCount: number }>>('/admin/avatars'));
+    } catch {
+      /* 忽略，页面其他区块仍可用 */
+    }
+  }, []);
+
+  async function addAvatar() {
+    const emoji = newEmoji.trim();
+    if (!emoji) return;
+    setError('');
+    try {
+      await apiFetch('/admin/avatars', { method: 'POST', body: JSON.stringify({ emoji }) });
+      setNewEmoji('');
+      setNotice('已新增头像');
+      await loadAvatars();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '新增失败');
+    }
+  }
+
+  async function editAvatar(item: { id: string; emoji: string }) {
+    const next = window.prompt('修改头像 emoji（已使用该头像的用户会同步更新）', item.emoji);
+    if (!next || next === item.emoji) return;
+    setError('');
+    try {
+      const res = await apiFetch<{ migrated: number }>(`/admin/avatars/${item.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ emoji: next }),
+      });
+      setNotice(res.migrated > 0 ? `已修改，${res.migrated} 位用户的头像同步更新` : '已修改');
+      await loadAvatars();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '修改失败');
+    }
+  }
+
+  async function removeAvatar(item: { id: string; emoji: string }) {
+    if (!window.confirm(`确认删除头像 ${item.emoji}？被用户使用的头像无法删除。`)) return;
+    setError('');
+    try {
+      await apiFetch(`/admin/avatars/${item.id}`, { method: 'DELETE' });
+      setNotice('已删除');
+      await loadAvatars();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '删除失败');
+    }
+  }
+
+  async function setDefaultAvatar(item: { id: string }) {
+    setError('');
+    try {
+      await apiFetch(`/admin/avatars/${item.id}`, { method: 'PATCH', body: JSON.stringify({ isDefault: true }) });
+      setNotice(`已将 ${item.id ? '该头像' : ''}设为默认头像，新注册用户会自动使用`);
+      await loadAvatars();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '设置失败');
+    }
+  }
   const [pwd, setPwd] = useState({ oldPassword: '', newPassword: '' });
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
@@ -61,7 +124,8 @@ export default function SettingsPage() {
 
   useEffect(() => {
     void load();
-  }, [load]);
+    void loadAvatars();
+  }, [load, loadAvatars]);
 
   async function saveConfig() {
     setBusy('config');
@@ -210,6 +274,58 @@ export default function SettingsPage() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="card">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="text-[15px] font-semibold">头像库</h2>
+            <p className="mt-1 text-xs text-[#667085]">被用户使用的头像只能修改（改后引用者同步更新），不能删除；默认头像不可删除</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              className="input h-9 w-[120px] text-center text-lg"
+              placeholder="🐲"
+              maxLength={4}
+              value={newEmoji}
+              onChange={(e) => setNewEmoji(e.target.value)}
+            />
+            <button type="button" className="btn-primary h-9 px-4 text-[13px]" onClick={addAvatar} disabled={!newEmoji.trim()}>
+              新增 emoji
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          {avatars.map((item) => (
+            <div
+              key={item.id}
+              className={`flex w-[132px] flex-col items-center gap-1 rounded-lg border p-2 ${
+                item.isDefault ? 'border-brand bg-brand-soft' : 'border-black/5 bg-white'
+              }`}
+            >
+              <span className="text-2xl leading-none">{item.emoji}</span>
+              <span className="text-[11px] text-[#667085]">
+                {item.isDefault ? '默认' : '可选'} · 用了 {item.usageCount} 人
+              </span>
+              <div className="flex items-center gap-2 text-[11px]">
+                <button type="button" className="text-brand" onClick={() => editAvatar(item)}>
+                  修改
+                </button>
+                {!item.isDefault ? (
+                  <>
+                    <button type="button" className="text-[#667085]" onClick={() => setDefaultAvatar(item)}>
+                      设默认
+                    </button>
+                    <button type="button" className="text-red-500" onClick={() => removeAvatar(item)}>
+                      删除
+                    </button>
+                  </>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="card">

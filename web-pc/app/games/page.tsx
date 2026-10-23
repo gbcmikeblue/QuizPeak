@@ -95,7 +95,9 @@ export default function GamesPage() {
     <main className="container-page py-10">
       <p className="text-xs font-medium tracking-wide text-brand">MINI GAMES</p>
       <h1 className="mt-1 text-2xl font-bold">小游戏</h1>
-      <p className="mt-1 text-sm text-[#667085]">每天一局，猜中得积分；另一款 Hexling 正在开发</p>
+      <p className="mt-1 text-sm text-[#667085]">
+        Wordling 每日猜词 + Hexling 每日拼词，两项都能获得积分，每日各一局
+      </p>
 
       <div className="mt-6 flex flex-wrap gap-2">
         {VARIANTS.map((v) => (
@@ -111,7 +113,9 @@ export default function GamesPage() {
             <span className="text-[11px] text-[#98A2B3]">{v.desc}</span>
           </button>
         ))}
-        <span className="ml-auto self-center rounded-lg bg-[#F2F4F7] px-3 py-2 text-[12px] text-[#98A2B3]">Hexling 开发中</span>
+        <span className="ml-auto self-center rounded-lg bg-brand-soft px-3 py-2 text-[12px] text-brand">
+          下方还有 Hexling · 16 字母拼词
+        </span>
       </div>
 
       <section className="card mx-auto mt-5 max-w-[520px]">
@@ -180,9 +184,16 @@ export default function GamesPage() {
 
             {message ? <p className="mt-3 text-center text-xs text-[#667085]">{message}</p> : null}
 
-            <p className="mt-4 text-center text-[11px] leading-5 text-[#98A2B3]">
-              绿色 = 位置正确，黄色 = 字母存在但位置错，灰色 = 不含该字母
-            </p>
+            <div className="mt-4 rounded-lg bg-[#FAFBFA] p-3 text-[11px] leading-5 text-[#667085]">
+              <p className="mb-1 text-[12px] font-medium text-[#344054]">玩法说明</p>
+              <p>· 输入规定长度的英文单词后提交，同一局可猜 6 次（Wordling Max 为 7 次）。</p>
+              <p>
+                · 色块反馈：<span className="font-medium text-brand">绿色</span> = 字母与位置都对；
+                <span className="font-medium text-[#B7791F]">黄色</span> = 字母在答案里但位置错；
+                <span className="font-medium text-[#667085]">灰色</span> = 答案里没有这个字母。
+              </p>
+              <p>· 每日一局，同一变体当天结束后不可重玩；猜中即得积分，次日 0 点刷新。</p>
+            </div>
           </>
         )}
       </section>
@@ -344,10 +355,16 @@ function HexlingCard() {
 
           {message ? <p className="mt-3 text-center text-xs text-[#667085]">{message}</p> : null}
 
-          <p className="mt-4 text-center text-[11px] leading-5 text-[#98A2B3]">
-            单词需在英文词典中；4 字母 +1、5 字母 +2、6 字母 +3、7 字母 +5、8 字母以上 +8，得分满{' '}
-            {state.rewardThreshold} 发放积分奖励
-          </p>
+          <div className="mt-4 rounded-lg bg-[#FAFBFA] p-3 text-[11px] leading-5 text-[#667085]">
+            <p className="mb-1 text-[12px] font-medium text-[#344054]">玩法说明</p>
+            <p>· 用今日 16 个字母拼单词，每个字母最多用一次（如盘里只有一个 t，就不能拼 test）。</p>
+            <p>· 单词至少 4 个字母，且必须是词典中的英文单词；同一单词只计一次。</p>
+            <p>· 可连续加入多个单词，全部加完后<b>一次性提交</b>，提交后当天不可再玩。</p>
+            <p>
+              · 计分：4 字母 +1、5 字母 +2、6 字母 +3、7 字母 +5、8 字母以上 +8；
+              总分满 {state.rewardThreshold} 发放积分奖励。
+            </p>
+          </div>
         </>
       )}
     </section>

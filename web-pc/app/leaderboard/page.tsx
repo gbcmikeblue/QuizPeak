@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Crown, Loader2, Star, ThumbsUp } from 'lucide-react';
 import { API_BASE } from '@/lib/api';
+import { avatarOf } from '@/lib/avatars';
 import { authFetch, fetchMe, getToken, type Me } from '@/lib/auth';
 
 type Period = 'all' | 'month';
@@ -36,16 +37,22 @@ interface MyRank {
 }
 
 function Avatar({ row, size = 40 }: { row: Row; size?: number }) {
-  const text = (row.nickname ?? row.username).slice(0, 1).toUpperCase();
-  return row.avatar ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={row.avatar} alt="" width={size} height={size} className="rounded-full object-cover" />
-  ) : (
+  // 头像可能是 emoji:🦊 / 图片 URL / 空（首字母）
+  const { emoji, url, letter } = avatarOf(row.avatar, row.nickname ?? row.username);
+
+  if (url) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={url} alt="" width={size} height={size} className="rounded-full object-cover" />
+    );
+  }
+
+  return (
     <span
-      className="grid place-items-center rounded-full bg-brand-soft text-sm font-semibold text-[#0B3B27]"
-      style={{ width: size, height: size }}
+      className="grid place-items-center rounded-full bg-brand-soft font-semibold text-[#0B3B27]"
+      style={{ width: size, height: size, fontSize: Math.round(size * 0.44) }}
     >
-      {text}
+      {emoji ?? letter}
     </span>
   );
 }

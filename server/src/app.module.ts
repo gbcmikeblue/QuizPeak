@@ -11,6 +11,7 @@ import { AdminUsersModule } from './admin-users/admin-users.module';
 import { AttemptsModule } from './attempts/attempts.module';
 import { ArticlesModule } from './articles/articles.module';
 import { AuthModule } from './auth/auth.module';
+import { AvatarsModule } from './avatars/avatars.module';
 import { ContestsModule } from './contests/contests.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { GamesModule } from './games/games.module';
@@ -19,6 +20,7 @@ import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { MeModule } from './me/me.module';
 import { PointsModule } from './points/points.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { SearchModule } from './search/search.module';
 import { QuizModule } from './quiz/quiz.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { TicketsModule } from './tickets/tickets.module';
@@ -30,6 +32,7 @@ import { UsersModule } from './users/users.module';
     ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env', '.env.local'] }),
     PrismaModule,
     AuthModule,
+    AvatarsModule,
     AdminAuthModule,
     AdminSmsModule,
     AdminQuizModule,
@@ -45,6 +48,7 @@ import { UsersModule } from './users/users.module';
     PointsModule,
     LeaderboardModule,
     MeModule,
+    SearchModule,
     UploadModule,
     TicketsModule,
     NotificationsModule,

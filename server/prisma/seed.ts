@@ -262,6 +262,21 @@ async function main() {
   }
   console.log(`[seed] badges ready: ${BADGES.length}`);
 
+  // 9. 头像库（默认头像 🐼）
+  const AVATARS = ['🦊', '🐼', '🐨', '🐯', '🦁', '🐸', '🐙', '🦉', '🐳', '🦄', '🐝', '🌵', '⭐', '🔥', '🚀', '🎯'];
+  for (let i = 0; i < AVATARS.length; i += 1) {
+    await prisma.avatarPreset.upsert({
+      where: { emoji: AVATARS[i] },
+      create: { emoji: AVATARS[i], sort: i, isDefault: AVATARS[i] === '🐼' },
+      update: {},
+    });
+  }
+  const hasDefault = await prisma.avatarPreset.findFirst({ where: { isDefault: true } });
+  if (!hasDefault) {
+    await prisma.avatarPreset.updateMany({ where: { emoji: '🐼' }, data: { isDefault: true } });
+  }
+  console.log(`[seed] avatars ready: ${AVATARS.length}`);
+
   console.log('[seed] done');
 }
 

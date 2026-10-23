@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight, Search, Sparkles, Trophy } from 'lucide-react';
 import { QuizCard } from '@/components/quiz-card';
+import { SearchBox } from '@/components/search-box';
 import { fetchQuizzes } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
@@ -38,7 +39,11 @@ export default async function HomePage() {
             <p className="mt-3 max-w-[460px] text-sm leading-6 text-[#4A6B5C]">
               分类题库、闯关模式、限时竞赛与实时排行榜。答对越多，积分与经验越高，还能登上积分榜。
             </p>
-            <div className="mt-6 flex gap-3">
+            <div className="mt-5">
+              <SearchBox />
+            </div>
+
+            <div className="mt-4 flex gap-3">
               <Link href="/quizzes" className="btn-primary h-11 px-6 text-sm">
                 开始答题 <ArrowRight size={15} />
               </Link>

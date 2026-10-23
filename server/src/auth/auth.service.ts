@@ -138,9 +138,12 @@ export class AuthService {
       ? await this.prisma.user.findUnique({ where: { inviteCode: params.inviteCode } })
       : null;
 
+    const defaultPreset = await this.prisma.avatarPreset.findFirst({ where: { isDefault: true } });
+
     const user = await this.prisma.user.create({
       data: {
         phone: params.phone,
+        avatar: defaultPreset ? `emoji:${defaultPreset.emoji}` : null,
         nickname: params.nickname ?? `用户${params.phone.slice(-4)}`,
         username: await this.generateUsername(),
         passwordHash: params.password ? await this.hash(params.password) : null,

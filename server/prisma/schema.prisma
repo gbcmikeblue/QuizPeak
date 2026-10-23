@@ -121,6 +121,7 @@ model User {
   favorites         Favorite[]
   badges            UserBadge[]
   tickets           Ticket[]
+  searchHistory     SearchHistory[]
   notifications     Notification[]
   gameRecords       GameRecord[]
 
@@ -548,6 +549,34 @@ model UserBadge {
 
   @@unique([userId, badgeId])
   @@index([userId, createdAt])
+}
+
+/// 搜索历史（用户删除后仅自己不可见，后台仍可查）
+model SearchHistory {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  keyword       String
+  /// 用户侧已删除（软删除，后台仍可见）
+  deletedByUser Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, keyword])
+  @@index([userId, updatedAt])
+  @@index([keyword])
+}
+
+/// 头像库（后台可增改；被用户引用后不可删除）
+model AvatarPreset {
+  id        String   @id @default(cuid())
+  /// emoji 字符，用户头像存 `emoji:<emoji>`
+  emoji     String   @unique
+  /// 是否默认头像（注册时自动分配，全局唯一）
+  isDefault Boolean  @default(false)
+  enabled   Boolean  @default(true)
+  sort      Int      @default(0)
+  createdAt DateTime @default(now())
 }
 
 model Ticket {
