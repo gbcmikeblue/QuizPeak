@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { AdminAuthModule } from './admin-auth/admin-auth.module';
+import { AdminContestModule } from './admin-contest/admin-contest.module';
 import { AdminQuizModule } from './admin-quiz/admin-quiz.module';
 import { AdminSmsModule } from './admin-sms/admin-sms.module';
 import { AdminUsersModule } from './admin-users/admin-users.module';
@@ -24,6 +25,7 @@ import { UsersModule } from './users/users.module';
     AdminAuthModule,
     AdminSmsModule,
     AdminQuizModule,
+    AdminContestModule,
     AdminUsersModule,
     AttemptsModule,
     ContestsModule,
