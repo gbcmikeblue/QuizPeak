@@ -1,5 +1,5 @@
-import Link from 'next/link';
 import { API_BASE } from '@/lib/api';
+import { CardShell } from '@/components/card-shell';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,19 +36,33 @@ export default async function ArticlesPage() {
       {list.length === 0 ? (
         <p className="py-16 text-center text-sm text-[#98A2B3]">暂无文章</p>
       ) : (
-        <div className="mt-6 grid gap-5 md:grid-cols-2">
+        <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((a) => (
-            <Link key={a.id} href={`/articles/${a.slug}`} className="card-quiz block p-5">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-brand">
-                {(a.category?.name ?? a.tags[0] ?? 'BLOG').toString()}
-              </p>
-              <h2 className="mt-2 text-[17px] font-semibold leading-6">{a.title}</h2>
-              {a.summary ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#667085]">{a.summary}</p> : null}
-              <p className="mt-3 text-xs text-[#98A2B3]">
-                {a.publishedAt ? new Date(a.publishedAt).toLocaleDateString('zh-CN') : '—'} · {a.readMinutes} 分钟阅读 ·{' '}
-                {a.views} 次浏览
-              </p>
-            </Link>
+            <CardShell
+              key={a.id}
+              href={`/articles/${a.slug}`}
+              actionLabel="阅读全文"
+              cover={{ src: null, alt: a.title, fallback: '📄' }}
+              topRight={
+                <span className="rounded-full bg-white/90 px-2.5 py-1 text-[11px] text-[#344054]">
+                  {a.category?.name ?? '文章'}
+                </span>
+              }
+              eyebrow={
+                <p className="text-[11px] font-medium uppercase tracking-wider text-brand">
+                  {a.tags[0] ?? 'BLOG'}
+                </p>
+              }
+              title={a.title}
+              description={a.summary}
+              meta={
+                <span>
+                  {a.publishedAt ? new Date(a.publishedAt).toLocaleDateString('zh-CN') : '—'} · {a.readMinutes} 分钟 ·{' '}
+                  {a.views} 次浏览
+                </span>
+              }
+              footerLeft={<span>{a.readMinutes} 分钟阅读</span>}
+            />
           ))}
         </div>
       )}

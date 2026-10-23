@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Loader2, Plus, RefreshCw, Trophy } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { ImageUpload } from '@/components/image-upload';
 
 interface Row {
   id: string;
@@ -53,6 +54,7 @@ function toLocal(dt: string) {
 const EMPTY = {
   title: '',
   description: '',
+  cover: '',
   startAt: '',
   endAt: '',
   capacity: 500,
@@ -107,6 +109,7 @@ export default function ContestsPage() {
       setForm({
         title: d.title,
         description: d.description ?? '',
+        cover: (d as unknown as { cover?: string | null }).cover ?? '',
         startAt: toLocal(d.startAt),
         endAt: toLocal(d.endAt),
         capacity: d.capacity,
@@ -301,6 +304,12 @@ export default function ContestsPage() {
                 className="input min-h-[80px] py-2"
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <ImageUpload
+                value={(form as unknown as { cover: string }).cover ?? ''}
+                onChange={(url) => setForm({ ...form, cover: url } as typeof form)}
               />
             </div>
             <div>

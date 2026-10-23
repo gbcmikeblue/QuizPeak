@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Plus, Save, Trash2, Wand2 } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { ImageUpload } from './image-upload';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
@@ -335,9 +336,8 @@ export function QuizEditor({ quizId }: { quizId?: string }) {
               onChange={(e) => setForm({ ...form, unlockThreshold: Number(e.target.value) })}
             />
           </div>
-          <div>
-            <label className="label">封面图 URL</label>
-            <input className="input" value={form.cover} onChange={(e) => setForm({ ...form, cover: e.target.value })} />
+          <div className="md:col-span-2">
+            <ImageUpload value={form.cover} onChange={(url) => setForm({ ...form, cover: url })} />
           </div>
           <div className="md:col-span-2">
             <label className="label">简介</label>

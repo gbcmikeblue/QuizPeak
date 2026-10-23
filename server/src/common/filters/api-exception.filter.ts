@@ -42,6 +42,26 @@ export class ApiExceptionFilter implements ExceptionFilter {
       return;
     }
 
+    // body-parser 抛出的错误（如请求体过大）没有继承 HttpException
+    const raw = exception as { status?: number; statusCode?: number; type?: string };
+    const rawStatus = raw?.status ?? raw?.statusCode;
+    if (raw?.type === 'entity.too.large' || rawStatus === 413) {
+      res.status(HttpStatus.PAYLOAD_TOO_LARGE).json({
+        code: 413,
+        message: '图片过大，请压缩到 2MB 以内再上传',
+        data: null,
+      });
+      return;
+    }
+    if (typeof rawStatus === 'number' && rawStatus >= 400 && rawStatus < 500) {
+      res.status(rawStatus).json({
+        code: rawStatus,
+        message: (exception as Error)?.message || '请求参数有误',
+        data: null,
+      });
+      return;
+    }
+
     this.logger.error(
       `Unhandled error ${req.method} ${req.url}: ${(exception as Error)?.message}`,
       (exception as Error)?.stack,
