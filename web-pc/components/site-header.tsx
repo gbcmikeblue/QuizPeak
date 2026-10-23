@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Bell, Search, Star, UserRound } from 'lucide-react';
 import { BRAND } from '@quizpeak/shared';
 import { clearToken, fetchMe, getToken, type Me } from '@/lib/auth';
@@ -19,17 +19,27 @@ export function SiteHeader() {
   const router = useRouter();
   const [me, setMe] = useState<Me | null>(null);
   const [ready, setReady] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
 
+  // 依赖路由变化重新读取登录态：登录/退出后无需手动刷新页面
   useEffect(() => {
-    if (!getToken()) {
+    const token = getToken();
+    if (!token) {
+      setMe(null);
       setReady(true);
       return;
     }
+    let alive = true;
     fetchMe().then((data) => {
+      if (!alive) return;
       setMe(data);
       setReady(true);
     });
-  }, []);
+    return () => {
+      alive = false;
+    };
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-20 border-b border-black/5 bg-white/90 backdrop-blur">
@@ -72,19 +82,42 @@ export function SiteHeader() {
                 <Star size={15} className="text-[#F5A623]" />
                 {me.points} <span className="text-xs font-normal text-[#4A6B5C]">积分</span>
               </Link>
-              <button
-                type="button"
-                onClick={() => {
-                  clearToken();
-                  router.replace('/');
-                  router.refresh();
-                  setMe(null);
-                }}
-                className="hidden h-9 items-center gap-1.5 rounded-full border border-black/10 px-3 text-[13px] text-[#475467] sm:flex"
-              >
-                <UserRound size={14} />
-                {me.nickname ?? me.username}
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen((v) => !v)}
+                  className="flex h-9 items-center gap-1.5 rounded-full border border-black/10 px-3 text-[13px] text-[#475467]"
+                >
+                  <UserRound size={14} />
+                  <span className="hidden sm:inline">{me.nickname ?? me.username}</span>
+                </button>
+                {menuOpen ? (
+                  <div className="absolute right-0 top-11 w-[160px] overflow-hidden rounded-lg border border-black/5 bg-white py-1 text-sm shadow-lg">
+                    <Link href="/me" className="block px-3 py-2 hover:bg-black/[0.03]" onClick={() => setMenuOpen(false)}>
+                      个人中心
+                    </Link>
+                    <Link href="/me?tab=settings" className="block px-3 py-2 hover:bg-black/[0.03]" onClick={() => setMenuOpen(false)}>
+                      设置
+                    </Link>
+                    <Link href="/points" className="block px-3 py-2 hover:bg-black/[0.03]" onClick={() => setMenuOpen(false)}>
+                      赚积分
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        clearToken();
+                        setMenuOpen(false);
+                        setMe(null);
+                        router.replace('/');
+                        router.refresh();
+                      }}
+                      className="block w-full px-3 py-2 text-left text-red-600 hover:bg-red-50"
+                    >
+                      退出登录
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             </>
           ) : ready ? (
             <Link href="/login" className="btn-primary h-9 px-4 text-[13px]">

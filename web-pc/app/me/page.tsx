@@ -1,0 +1,281 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Loader2, Star } from 'lucide-react';
+import { authFetch, fetchMe, getToken, type Me } from '@/lib/auth';
+
+interface HistoryItem {
+  id: string;
+  title: string;
+  targetId: string;
+  levelNo?: number | null;
+  score: number;
+  totalScore: number;
+  correctCount: number;
+  durationSec: number;
+  rank?: number | null;
+  time: string | null;
+  kind: 'quiz' | 'contest';
+}
+
+export default function MePage() {
+  const router = useRouter();
+  const [me, setMe] = useState<Me | null>(null);
+  const [tab, setTab] = useState<'quiz' | 'contest' | 'settings'>('quiz');
+  const [list, setList] = useState<HistoryItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [profile, setProfile] = useState({ nickname: '', firstName: '', lastName: '', address: '' });
+  const [pwd, setPwd] = useState({ oldPassword: '', newPassword: '' });
+  const [busy, setBusy] = useState('');
+
+  const loadHistory = useCallback(async (type: 'quiz' | 'contest') => {
+    setLoading(true);
+    try {
+      const res = await authFetch<{ list: HistoryItem[]; total: number }>(`/me/history?type=${type}&page=1&pageSize=20`);
+      setList(res.list);
+      setTotal(res.total);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '加载失败');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!getToken()) {
+      router.replace('/login?redirect=%2Fme');
+      return;
+    }
+    fetchMe().then((data) => {
+      setMe(data);
+      if (data) {
+        setProfile({
+          nickname: data.nickname ?? '',
+          firstName: '',
+          lastName: '',
+          address: '',
+        });
+        authFetch<{ firstName: string | null; lastName: string | null; address: string | null }>('/me').then((p) => {
+          setProfile((prev) => ({
+            ...prev,
+            firstName: p.firstName ?? '',
+            lastName: p.lastName ?? '',
+            address: p.address ?? '',
+          }));
+        });
+      }
+    });
+  }, [router]);
+
+  useEffect(() => {
+    if (tab === 'quiz' || tab === 'contest') void loadHistory(tab);
+  }, [tab, loadHistory]);
+
+  async function saveProfile() {
+    setBusy('profile');
+    setError('');
+    setNotice('');
+    try {
+      await authFetch('/me', { method: 'PATCH', body: JSON.stringify(profile) });
+      setNotice('资料已保存');
+      setMe(await fetchMe());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '保存失败');
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function savePassword() {
+    setBusy('pwd');
+    setError('');
+    setNotice('');
+    try {
+      await authFetch('/me/password', { method: 'POST', body: JSON.stringify(pwd) });
+      setNotice('密码已更新');
+      setPwd({ oldPassword: '', newPassword: '' });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '修改失败');
+    } finally {
+      setBusy('');
+    }
+  }
+
+  if (!me) {
+    return <main className="container-page py-16 text-sm text-[#667085]">加载中…</main>;
+  }
+
+  return (
+    <main className="container-page py-8">
+      <section className="card flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <span className="grid h-16 w-16 place-items-center rounded-full bg-brand-soft text-xl font-semibold text-[#0B3B27]">
+            {(me.nickname ?? me.username).slice(0, 1)}
+          </span>
+          <div>
+            <p className="text-lg font-semibold">{me.nickname ?? me.username}</p>
+            <p className="text-xs text-[#667085]">
+              @{me.username} · Lv.{me.level} · 连续签到 {me.streakDays} 天
+            </p>
+            <p className="mt-1 flex items-center gap-1 text-sm text-[#0B3B27]">
+              <Star size={14} className="text-[#F5A623]" /> {me.points} 积分
+              <span className="ml-2 text-xs text-[#98A2B3]">累计获得 {me.totalEarned}</span>
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2 text-[13px]">
+          <Link href="/points" className="btn-outline h-9 px-4">
+            赚积分
+          </Link>
+          <Link href="/leaderboard" className="btn-outline h-9 px-4">
+            排行榜
+          </Link>
+        </div>
+      </section>
+
+      <div className="mt-5 flex gap-1 border-b border-black/5 text-sm">
+        {(
+          [
+            { key: 'quiz', label: '答题记录' },
+            { key: 'contest', label: '竞赛记录' },
+            { key: 'settings', label: '设置' },
+          ] as const
+        ).map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setTab(t.key)}
+            className={
+              tab === t.key
+                ? 'border-b-2 border-brand px-4 py-2.5 font-medium text-brand'
+                : 'px-4 py-2.5 text-[#667085]'
+            }
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {error ? <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p> : null}
+      {notice ? <p className="mt-3 rounded-lg bg-brand-soft px-3 py-2 text-sm text-brand">{notice}</p> : null}
+
+      {tab === 'settings' ? (
+        <div className="mt-5 grid items-start gap-5 md:grid-cols-2">
+          <div className="card">
+            <div className="flex items-center justify-between border-b border-black/5 pb-4">
+              <h2 className="text-[15px] font-semibold">个人资料</h2>
+              <span className="text-xs text-[#98A2B3]">昵称会显示在排行榜</span>
+            </div>
+            <div className="mt-5 space-y-4">
+            {(
+              [
+                { key: 'nickname', label: '昵称' },
+                { key: 'firstName', label: '名' },
+                { key: 'lastName', label: '姓' },
+                { key: 'address', label: '地址' },
+              ] as const
+            ).map((f) => (
+              <div key={f.key}>
+                <label className="label">{f.label}</label>
+                <input
+                  className="input"
+                  value={profile[f.key]}
+                  onChange={(e) => setProfile({ ...profile, [f.key]: e.target.value })}
+                />
+              </div>
+            ))}
+            </div>
+            <button type="button" className="btn-primary mt-5 h-10 w-full" onClick={saveProfile} disabled={busy === 'profile'}>
+              {busy === 'profile' ? <Loader2 size={14} className="animate-spin" /> : null}
+              保存资料
+            </button>
+          </div>
+
+          <div className="card">
+            <div className="flex items-center justify-between border-b border-black/5 pb-4">
+              <h2 className="text-[15px] font-semibold">修改密码</h2>
+              <span className="text-xs text-[#98A2B3]">至少 8 位，含字母和数字</span>
+            </div>
+            <div className="mt-5 space-y-4">
+            <div>
+              <label className="label">原密码（短信注册的账号可留空）</label>
+              <input
+                type="password"
+                className="input"
+                value={pwd.oldPassword}
+                onChange={(e) => setPwd({ ...pwd, oldPassword: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label">新密码（≥8 位，含字母和数字）</label>
+              <input
+                type="password"
+                className="input"
+                value={pwd.newPassword}
+                onChange={(e) => setPwd({ ...pwd, newPassword: e.target.value })}
+              />
+            </div>
+            </div>
+            <button type="button" className="btn-primary mt-5 h-10 w-full" onClick={savePassword} disabled={busy === 'pwd'}>
+              {busy === 'pwd' ? <Loader2 size={14} className="animate-spin" /> : null}
+              更新密码
+            </button>
+            <p className="mt-3 text-xs leading-5 text-[#98A2B3]">
+              积分不可转让、不可兑现；账号问题可在客服工单中提交。
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-4 space-y-3">
+          {loading ? (
+            <p className="py-10 text-center text-sm text-[#667085]">加载中…</p>
+          ) : list.length === 0 ? (
+            <div className="card py-12 text-center">
+              <p className="text-sm text-[#667085]">还没有{tab === 'quiz' ? '答题' : '竞赛'}记录</p>
+              <Link href={tab === 'quiz' ? '/quizzes' : '/contests'} className="btn-primary mt-4 h-9 px-4 text-[13px]">
+                去{tab === 'quiz' ? '答题' : '参赛'}
+              </Link>
+            </div>
+          ) : (
+            <>
+              <p className="text-xs text-[#98A2B3]">共 {total} 条</p>
+              {list.map((item) => (
+                <div key={item.id} className="card flex flex-wrap items-center justify-between gap-3 py-4">
+                  <div>
+                    <p className="text-sm font-medium">
+                      {item.title}
+                      {item.levelNo ? <span className="ml-2 text-xs text-[#98A2B3]">第 {item.levelNo} 关</span> : null}
+                    </p>
+                    <p className="text-xs text-[#98A2B3]">
+                      {item.time ? new Date(item.time).toLocaleString('zh-CN') : '—'} · 用时 {item.durationSec}s
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm">
+                    <span className="font-medium">
+                      {item.score}
+                      <span className="text-xs text-[#98A2B3]"> / {item.totalScore}</span>
+                    </span>
+                    {item.kind === 'contest' && item.rank ? (
+                      <span className="rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand">第 {item.rank} 名</span>
+                    ) : null}
+                    <Link
+                      href={item.kind === 'quiz' ? `/quizzes/${item.targetId}` : `/contests/${item.targetId}`}
+                      className="text-[13px] text-brand"
+                    >
+                      {item.kind === 'quiz' ? '再练一次' : '查看竞赛'}
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      )}
+    </main>
+  );
+}

@@ -35,8 +35,8 @@ export class PointsController {
   }
 
   @Get('activities')
-  activities() {
-    return this.points.listActivities();
+  activities(@CurrentUser() user: User) {
+    return this.points.listActivities(user.id);
   }
 
   @Post('checkin')

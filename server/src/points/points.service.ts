@@ -211,13 +211,22 @@ export class PointsService {
     });
   }
 
-  listActivities() {
+  /** 进行中的活动；已领取的标记 claimed，前端据此置灰 */
+  async listActivities(userId?: string) {
     const now = new Date();
-    return this.prisma.activity.findMany({
+    const activities = await this.prisma.activity.findMany({
       where: { enabled: true, startAt: { lte: now }, endAt: { gte: now } },
       orderBy: { endAt: 'asc' },
       take: 10,
     });
+    if (!userId || activities.length === 0) return activities.map((a) => ({ ...a, claimed: false }));
+
+    const claimed = await this.prisma.activityReward.findMany({
+      where: { userId, activityId: { in: activities.map((a) => a.id) } },
+      select: { activityId: true },
+    });
+    const claimedSet = new Set(claimed.map((c) => c.activityId));
+    return activities.map((a) => ({ ...a, claimed: claimedSet.has(a.id) }));
   }
 
   /** 积分总览：余额、今日获得、任务进度 */

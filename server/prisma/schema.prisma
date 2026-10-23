@@ -390,8 +390,8 @@ model PointTransaction {
 
   @@index([userId, createdAt])
   @@index([type, createdAt])
-  // 同一业务来源只允许入账一次，保证签到 / 广告 / 活动 / 点赞幂等
-  @@unique([type, refType, refId])
+  // 同一用户、同一业务来源只允许入账一次（签到/广告/活动/点赞幂等）
+  @@unique([userId, type, refType, refId])
 }
 
 model DailyCheckin {

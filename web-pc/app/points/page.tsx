@@ -29,6 +29,7 @@ interface Activity {
   desc: string | null;
   points: number;
   endAt: string;
+  claimed?: boolean;
 }
 
 const TX_LABEL: Record<string, string> = {
@@ -53,7 +54,7 @@ export default function PointsPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
-  const [toast, setToast] = useState('');
+  const [hint, setHint] = useState<{ key: string; text: string } | null>(null);
 
   const load = useCallback(async () => {
     const [s, t, a] = await Promise.all([
@@ -83,8 +84,8 @@ export default function PointsPage() {
         method: 'POST',
         body: '{}',
       });
-      setToast(`+${res.points} 积分`);
-      setTimeout(() => setToast(''), 2000);
+      setHint({ key: kind, text: `获得 ${res.points} 积分` });
+      setTimeout(() => setHint(null), 2200);
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : '操作失败');
@@ -101,8 +102,8 @@ export default function PointsPage() {
         method: 'POST',
         body: '{}',
       });
-      setToast(`+${res.points} 积分`);
-      setTimeout(() => setToast(''), 2000);
+      setHint({ key: id, text: `获得 ${res.points} 积分` });
+      setTimeout(() => setHint(null), 2200);
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : '领取失败');
@@ -172,6 +173,13 @@ export default function PointsPage() {
             {busy === 'checkin' ? <Loader2 size={15} className="animate-spin" /> : null}
             {summary.checkedInToday ? '今日已签到' : '签到'}
           </button>
+          {hint?.key === 'checkin' ? (
+            <p className="mt-2 text-center text-xs font-medium text-brand">{hint.text}</p>
+          ) : (
+            <p className="mt-2 text-center text-xs text-[#98A2B3]">
+              {summary.checkedInToday ? '明天再来可继续累计连续天数' : '签到后立即可得积分'}
+            </p>
+          )}
         </div>
 
         <div className="card flex flex-col">
@@ -190,6 +198,13 @@ export default function PointsPage() {
             {busy === 'ad' ? <Loader2 size={15} className="animate-spin" /> : null}
             {ad?.claimable ? '观看广告' : '今日次数已用完'}
           </button>
+          {hint?.key === 'ad' ? (
+            <p className="mt-2 text-center text-xs font-medium text-brand">{hint.text}</p>
+          ) : (
+            <p className="mt-2 text-center text-xs text-[#98A2B3]">
+              {ad?.claimable ? '看完广告后自动到账' : '明天 00:00 重置次数'}
+            </p>
+          )}
         </div>
 
         <div className="card flex flex-col">
@@ -219,19 +234,31 @@ export default function PointsPage() {
                     +{a.points} 积分 · 截止 {new Date(a.endAt).toLocaleDateString('zh-CN')}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  disabled={busy === a.id}
-                  onClick={() => claim(a.id)}
-                  className="btn-primary h-9 px-4 text-[13px]"
-                >
-                  {busy === a.id ? '领取中…' : '领取'}
-                </button>
+                <div className="text-right">
+                  <button
+                    type="button"
+                    disabled={busy === a.id || a.claimed}
+                    onClick={() => claim(a.id)}
+                    className="btn-primary h-9 px-4 text-[13px]"
+                  >
+                    {a.claimed ? '已领取' : busy === a.id ? '领取中…' : '领取'}
+                  </button>
+                  {hint?.key === a.id && !a.claimed ? (
+                    <p className="mt-1 text-xs font-medium text-brand">{hint.text}</p>
+                  ) : null}
+                </div>
               </div>
             ))}
           </div>
         </section>
-      ) : null}
+      ) : (
+        <section className="card mt-5">
+          <div className="flex items-center gap-2 text-[15px] font-semibold">
+            <Gift size={16} className="text-brand" /> 活动
+          </div>
+          <p className="py-6 text-center text-sm text-[#98A2B3]">暂无进行中的活动</p>
+        </section>
+      )}
 
       <section className="card mt-5">
         <h2 className="text-[15px] font-semibold">积分明细</h2>
@@ -260,11 +287,6 @@ export default function PointsPage() {
         </div>
       </section>
 
-      {toast ? (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 rounded-full bg-[#0B3B27] px-5 py-2.5 text-sm text-white shadow-lg">
-          {toast}
-        </div>
-      ) : null}
     </main>
   );
 }
