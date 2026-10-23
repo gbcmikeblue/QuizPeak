@@ -3,6 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight, CheckCircle2, Lightbulb, SkipForward, Timer, XCircle } from 'lucide-react';
+
 import type { AnswerResult, FinishResult, PlayData } from '@/lib/api';
 import { authFetch } from '@/lib/auth';
 
@@ -20,6 +21,39 @@ function PlayInner() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [finishing, setFinishing] = useState(false);
+  const [hintText, setHintText] = useState('');
+  const [hintBusy, setHintBusy] = useState(false);
+
+  async function useHint() {
+    if (!data || !question || hintBusy) return;
+    setHintBusy(true);
+    setError('');
+    try {
+      const res = await authFetch<{ hint: string; free: boolean; cost: number }>(`/attempts/${data.attemptId}/hint`, {
+        method: 'POST',
+        body: JSON.stringify({ questionId: question.id }),
+      });
+      setHintText(res.free ? res.hint : `${res.hint}（本次消耗 ${res.cost} 积分）`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '获取提示失败');
+    } finally {
+      setHintBusy(false);
+    }
+  }
+
+  async function skipCurrent() {
+    if (!data || !question) return;
+    try {
+      await authFetch(`/attempts/${data.attemptId}/skip`, {
+        method: 'POST',
+        body: JSON.stringify({ questionId: question.id }),
+      });
+      setHintText('');
+      await next();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '跳过失败');
+    }
+  }
 
   useEffect(() => {
     if (!id) return;
@@ -227,6 +261,12 @@ function PlayInner() {
             </div>
           ) : null}
 
+          {hintText ? (
+            <div className="mt-3 rounded-lg bg-[#FFF7E6] px-3 py-2 text-sm leading-6 text-[#8A6A1F]">
+              提示：{hintText}
+            </div>
+          ) : null}
+
           {error ? <p className="mt-3 text-xs text-red-600">{error}</p> : null}
 
           <div className="mt-5 flex items-center justify-between">
@@ -240,6 +280,18 @@ function PlayInner() {
                     className="btn-primary h-10 px-5 text-[13px]"
                   >
                     {busy ? '提交中…' : '提交答案'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={useHint}
+                    disabled={hintBusy}
+                    className="btn-outline h-10 px-3 text-[13px]"
+                    title="每场首次免费，之后消耗积分"
+                  >
+                    <Lightbulb size={14} /> 提示
+                  </button>
+                  <button type="button" onClick={skipCurrent} className="btn-outline h-10 px-3 text-[13px]" title="跳过按答错计分">
+                    <SkipForward size={14} /> 跳过
                   </button>
                   <button
                     type="button"

@@ -41,6 +41,15 @@ export class AttemptsController {
     return this.attempts.submitAnswer(id, user.id, body);
   }
 
+  @Post('attempts/:id/hint')
+  hint(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+    @Body(new ZodValidationPipe(skipSchema)) body: { questionId: string },
+  ) {
+    return this.attempts.hint(id, user.id, body.questionId);
+  }
+
   @Post('attempts/:id/skip')
   skip(
     @Param('id') id: string,

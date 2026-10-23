@@ -1,12 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AttemptStatus } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.module';
 import { PrismaService } from '../prisma/prisma.service';
 
 const TYPES: Record<string, string> = { quiz: 'QUIZ', contest: 'CONTEST', article: 'ARTICLE' };
 
 @Injectable()
 export class MeService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   /** 收藏列表：按类型聚合真实内容 */
   async favorites(userId: string, type = 'quiz') {
@@ -127,6 +131,12 @@ export class MeService {
         achievedSet.add(def.id);
         newly.push(def.code);
       }
+    }
+
+    for (const code of newly) {
+      const def = defs.find((d) => d.code === code);
+      if (!def) continue;
+      await this.notifications.push(userId, 'BADGE', `获得新徽章：${def.name}`, def.desc, '/me?tab=badges');
     }
 
     return {

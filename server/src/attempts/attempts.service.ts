@@ -113,6 +113,43 @@ export class AttemptsService {
     };
   }
 
+  /** 提示：每场首次免费，之后扣积分 */
+  async hint(attemptId: string, userId: string, questionId: string) {
+    const attempt = await this.prisma.quizAttempt.findUnique({ where: { id: attemptId } });
+    if (!attempt || attempt.userId !== userId) throw new NotFoundException('作答记录不存在');
+
+    const question = await this.prisma.question.findUnique({ where: { id: questionId } });
+    if (!question) throw new NotFoundException('题目不存在');
+
+    const used = await this.prisma.quizAnswer.count({ where: { attemptId, hintUsed: true } });
+    const free = await this.points.rule('rule.hint_free_per_attempt', DEFAULT_RULES.HINT_FREE_PER_ATTEMPT);
+    const cost = await this.points.rule('rule.hint_point_cost', DEFAULT_RULES.HINT_POINT_COST);
+
+    if (used >= free && cost > 0) {
+      await this.points.change({
+        userId,
+        delta: -cost,
+        type: PointTxType.HINT_COST,
+        refType: 'hint',
+        refId: `${attemptId}:${questionId}`,
+        remark: '使用提示',
+      });
+    }
+
+    await this.prisma.quizAnswer.upsert({
+      where: { attemptId_questionId: { attemptId, questionId } },
+      create: { attemptId, questionId, answer: [], isCorrect: false, hintUsed: true },
+      update: { hintUsed: true },
+    });
+
+    const analysis = question.analysis ?? '';
+    return {
+      free: used < free,
+      cost: used < free ? 0 : cost,
+      hint: analysis.split(/[。.!！]/)[0] || '这道题可以结合题干关键词排除干扰项',
+    };
+  }
+
   /** 跳过：记为未答，继续下一题 */
   async skip(attemptId: string, userId: string, questionId: string) {
     const attempt = await this.prisma.quizAttempt.findUnique({ where: { id: attemptId } });
@@ -184,6 +221,27 @@ export class AttemptsService {
       }
       if (xpEarned > 0) {
         await this.prisma.user.update({ where: { id: userId }, data: { xp: { increment: xpEarned } } });
+      }
+
+      // 邀请奖励：被邀请人首次通关时，给邀请人发积分（同一被邀请人只发一次）
+      const me = await this.prisma.user.findUnique({ where: { id: userId }, select: { inviterId: true } });
+      if (me?.inviterId) {
+        const reward = await this.points.rule('points.invite_reward', DEFAULT_RULES.INVITE_REWARD_POINTS);
+        if (reward > 0) {
+          const exists = await this.prisma.pointTransaction.findFirst({
+            where: { userId: me.inviterId, type: PointTxType.INVITE_REWARD, refType: 'invitee', refId: userId },
+          });
+          if (!exists) {
+            await this.points.change({
+              userId: me.inviterId,
+              delta: reward,
+              type: PointTxType.INVITE_REWARD,
+              refType: 'invitee',
+              refId: userId,
+              remark: '好友完成首次答题',
+            });
+          }
+        }
       }
     }
 
