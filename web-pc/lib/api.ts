@@ -97,6 +97,51 @@ export interface ReviewItem {
   analysis: string;
 }
 
+export type ContestStatus = 'UPCOMING' | 'RUNNING' | 'ENDED';
+
+export interface ContestCard {
+  id: string;
+  title: string;
+  cover: string | null;
+  description: string | null;
+  category: { id: string; name: string } | null;
+  startAt: string;
+  endAt: string;
+  capacity: number;
+  entryFee: number;
+  prizePool: number;
+  questionCount: number;
+  durationSec: number;
+  enrolledCount: number;
+  effectiveStatus: ContestStatus;
+}
+
+export interface ContestDetail extends ContestCard {
+  questionsCount: number;
+  prizes: Array<{ rank: number; points: number; xp: number }>;
+}
+
+export interface ContestPlay {
+  attemptId: string;
+  contest: { id: string; title: string };
+  questionSeconds: number;
+  endAt: string;
+  questions: PlayQuestion[];
+  answered: Array<{ questionId: string; answer: string[]; isCorrect: boolean }>;
+}
+
+export interface ContestFinish {
+  attemptId: string;
+  score: number;
+  totalScore: number;
+  correctCount: number;
+  total: number;
+  totalTimeSec: number;
+  rank: number;
+  pointsEarned: number;
+  xpEarned: number;
+}
+
 export interface ReviewData {
   attempt: {
     id: string;

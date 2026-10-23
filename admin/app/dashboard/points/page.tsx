@@ -1,16 +1,187 @@
-import { Placeholder } from '@/components/placeholder';
+'use client';
 
-export default function Page() {
+import { useCallback, useEffect, useState } from 'react';
+import { RefreshCw } from 'lucide-react';
+import { apiFetch } from '@/lib/api';
+
+interface Row {
+  id: string;
+  type: string;
+  change: number;
+  balanceAfter: number;
+  remark: string | null;
+  createdAt: string;
+  user: { nickname: string | null; username: string; phone: string };
+}
+
+interface ListData {
+  list: Row[];
+  total: number;
+  page: number;
+  pageSize: number;
+  sum: number;
+}
+
+const TYPES = [
+  { value: '', label: '全部类型' },
+  { value: 'REGISTER_BONUS', label: '新人礼' },
+  { value: 'CHECKIN', label: '每日签到' },
+  { value: 'AD_REWARD', label: '观看广告' },
+  { value: 'LIKE_GIVEN', label: '点赞奖励' },
+  { value: 'ACTIVITY', label: '活动奖励' },
+  { value: 'QUIZ_REWARD', label: '答题奖励' },
+  { value: 'QUIZ_ENROLL', label: '解锁题库' },
+  { value: 'CONTEST_ENROLL', label: '竞赛报名' },
+  { value: 'CONTEST_REWARD', label: '竞赛奖励' },
+  { value: 'HINT_COST', label: '使用提示' },
+  { value: 'INVITE_REWARD', label: '邀请好友' },
+  { value: 'ADMIN_ADJUST', label: '后台调整' },
+];
+
+const LABEL = new Map(TYPES.filter((t) => t.value).map((t) => [t.value, t.label]));
+
+export default function PointsLedgerPage() {
+  const [data, setData] = useState<ListData | null>(null);
+  const [type, setType] = useState('');
+  const [keyword, setKeyword] = useState('');
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const q = new URLSearchParams({ page: String(page), pageSize: '20' });
+      if (type) q.set('type', type);
+      if (keyword) q.set('keyword', keyword);
+      setData(await apiFetch<ListData>(`/admin/point-transactions?${q}`));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '加载失败');
+    } finally {
+      setLoading(false);
+    }
+  }, [page, type, keyword]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const totalPages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
+
   return (
-    <Placeholder
-      title="积分流水"
-      desc="全站积分发放与消耗明细（不涉及任何货币充值或提现）。"
-      bullets={[
-        '字段：时间、用户、类型、变动值、变动后余额、业务来源（签到 / 活动 / 点赞 / 广告 / 答题 / 竞赛 / 后台调整）',
-        '筛选：类型、时间范围、用户ID / 手机号；导出 CSV',
-        '人工调整：填写变动值与理由，二次确认后入账，写审计日志',
-        '风控：同一用户短时间大量获得积分时高亮提示（广告、点赞日限次由服务端强制）',
-      ]}
-    />
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold">积分流水</h1>
+          <p className="mt-1 text-sm text-[#667085]">全站积分发放与消耗（不涉及任何货币充值或提现）</p>
+        </div>
+        <span className="text-sm text-[#667085]">
+          共 {data?.total ?? 0} 条 · 净变动{' '}
+          <span className={(data?.sum ?? 0) >= 0 ? 'font-semibold text-brand' : 'font-semibold text-red-600'}>
+            {data?.sum ?? 0}
+          </span>
+        </span>
+      </div>
+
+      <div className="card flex flex-wrap items-end gap-3">
+        <div>
+          <label className="label">类型</label>
+          <select
+            className="input w-[160px]"
+            value={type}
+            onChange={(e) => {
+              setType(e.target.value);
+              setPage(1);
+            }}
+          >
+            {TYPES.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="label">用户</label>
+          <input
+            className="input w-[220px]"
+            placeholder="手机号 / 昵称"
+            value={keyword}
+            onChange={(e) => {
+              setKeyword(e.target.value.trim());
+              setPage(1);
+            }}
+          />
+        </div>
+        <button type="button" className="btn-ghost h-10" onClick={() => void load()} disabled={loading}>
+          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> 刷新
+        </button>
+      </div>
+
+      {error ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p> : null}
+
+      <div className="card overflow-hidden p-0">
+        <table className="table-base">
+          <thead>
+            <tr>
+              <th>时间</th>
+              <th>用户</th>
+              <th>类型</th>
+              <th>变动</th>
+              <th>变动后余额</th>
+              <th>备注</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data?.list.length ? (
+              data.list.map((row) => (
+                <tr key={row.id}>
+                  <td className="whitespace-nowrap text-xs text-[#667085]">
+                    {new Date(row.createdAt).toLocaleString('zh-CN')}
+                  </td>
+                  <td className="text-sm">
+                    <p className="font-medium">{row.user.nickname ?? row.user.username}</p>
+                    <p className="text-xs text-[#98A2B3]">{row.user.phone}</p>
+                  </td>
+                  <td className="text-sm">{LABEL.get(row.type) ?? row.type}</td>
+                  <td className={`text-sm font-medium ${row.change > 0 ? 'text-brand' : 'text-red-600'}`}>
+                    {row.change > 0 ? `+${row.change}` : row.change}
+                  </td>
+                  <td className="text-sm">{row.balanceAfter}</td>
+                  <td className="text-xs text-[#667085]">{row.remark ?? '—'}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} className="py-12 text-center text-sm text-[#98A2B3]">
+                  {loading ? '加载中…' : '暂无流水'}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex items-center justify-between text-sm text-[#667085]">
+        <span>第 {page} 页</span>
+        <div className="flex items-center gap-2">
+          <button type="button" className="btn-ghost h-9 px-3 text-[13px]" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+            上一页
+          </button>
+          <span>
+            {page} / {totalPages}
+          </span>
+          <button
+            type="button"
+            className="btn-ghost h-9 px-3 text-[13px]"
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            下一页
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

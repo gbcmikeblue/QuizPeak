@@ -174,6 +174,48 @@ async function main() {
   }
   console.log(`[seed] questions created: ${totalQuestions}`);
 
+  // 6. 示例竞赛（进行中，8 题，前三名奖励积分 + XP）
+  const contestTitle = 'Web 开发挑战赛';
+  const contestExists = await prisma.contest.findFirst({ where: { title: contestTitle } });
+  if (!contestExists) {
+    const level1 = await prisma.quizLevel.findUnique({
+      where: { quizId_levelNo: { quizId: quiz.id, levelNo: 1 } },
+    });
+    const contestQuestions = level1
+      ? await prisma.question.findMany({ where: { levelId: level1.id }, orderBy: { sort: 'asc' }, take: 8 })
+      : [];
+
+    const now = new Date();
+    await prisma.contest.create({
+      data: {
+        title: contestTitle,
+        cover: null,
+        description:
+          '限时竞赛：8 道题、每题 120 秒，按得分排名，得分相同按用时更短者优先。报名消耗 50 积分，前三名分别获得 1000 / 500 / 100 积分与 XP 奖励。',
+        categoryId: category?.id,
+        questionCount: contestQuestions.length,
+        durationSec: contestQuestions.length * 120,
+        startAt: new Date(now.getTime() - 60 * 60 * 1000),
+        endAt: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+        capacity: 500,
+        entryFee: 50,
+        prizePool: 1600,
+        status: 'RUNNING',
+        prizes: {
+          create: [
+            { rank: 1, points: 1000, xp: 10000 },
+            { rank: 2, points: 500, xp: 5000 },
+            { rank: 3, points: 100, xp: 1000 },
+          ],
+        },
+        questions: {
+          create: contestQuestions.map((q, i) => ({ questionId: q.id, sort: i })),
+        },
+      },
+    });
+    console.log(`[seed] contest created: ${contestTitle} (${contestQuestions.length} 题)`);
+  }
+
   console.log('[seed] done');
 }
 

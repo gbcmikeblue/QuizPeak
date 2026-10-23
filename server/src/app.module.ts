@@ -4,8 +4,10 @@ import { APP_GUARD } from '@nestjs/core';
 import { AdminAuthModule } from './admin-auth/admin-auth.module';
 import { AdminQuizModule } from './admin-quiz/admin-quiz.module';
 import { AdminSmsModule } from './admin-sms/admin-sms.module';
+import { AdminUsersModule } from './admin-users/admin-users.module';
 import { AttemptsModule } from './attempts/attempts.module';
 import { AuthModule } from './auth/auth.module';
+import { ContestsModule } from './contests/contests.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { HealthController } from './health/health.controller';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
@@ -22,7 +24,9 @@ import { UsersModule } from './users/users.module';
     AdminAuthModule,
     AdminSmsModule,
     AdminQuizModule,
+    AdminUsersModule,
     AttemptsModule,
+    ContestsModule,
     UsersModule,
     QuizModule,
     PointsModule,

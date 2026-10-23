@@ -345,14 +345,33 @@ model ContestAttempt {
   contestId    String
   contest      Contest       @relation(fields: [contestId], references: [id], onDelete: Cascade)
   score        Int           @default(0)
+  totalScore   Int           @default(0)
+  correctCount Int           @default(0)
   totalTimeSec Int           @default(0)
+  questionIds  Json          @default("[]")
   rank         Int?
   status       AttemptStatus @default(IN_PROGRESS)
   startedAt    DateTime      @default(now())
   finishedAt   DateTime?
 
+  answers ContestAnswer[]
+
   @@unique([userId, contestId])
   @@index([contestId, score])
+}
+
+model ContestAnswer {
+  id         String   @id @default(cuid())
+  attemptId  String
+  attempt    ContestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId String
+  answer     Json     @default("[]")
+  isCorrect  Boolean  @default(false)
+  usedSec    Int      @default(0)
+  skipped    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@unique([attemptId, questionId])
 }
 
 // ============ 积分体系（站内积分，不涉及货币） ============
