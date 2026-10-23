@@ -49,6 +49,14 @@ export default function MePage() {
     }
   }, []);
 
+  // 支持 /me?tab=badges 这类深链（通知、头像菜单会带参数跳过来）
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get('tab');
+    if (t === 'quiz' || t === 'contest' || t === 'favorites' || t === 'badges' || t === 'settings') {
+      setTab(t);
+    }
+  }, []);
+
   useEffect(() => {
     if (!getToken()) {
       router.replace('/login?redirect=%2Fme');

@@ -28,7 +28,12 @@ export class AdminConfigService {
   }
 
   async activities() {
-    const rows = await this.prisma.activity.findMany({ orderBy: { createdAt: 'desc' } });
+    const [rows, claimed] = await Promise.all([
+      this.prisma.activity.findMany({ orderBy: { createdAt: 'desc' } }),
+      this.prisma.activityReward.groupBy({ by: ['activityId'], _count: { _all: true } }),
+    ]);
+    const claimMap = new Map(claimed.map((c) => [c.activityId, c._count._all]));
+
     return rows.map((a) => ({
       id: a.id,
       title: a.title,
@@ -38,7 +43,10 @@ export class AdminConfigService {
       startAt: a.startAt,
       endAt: a.endAt,
       enabled: a.enabled,
-      claimCount: 0,
+      /** 已领取人数 */
+      claimCount: claimMap.get(a.id) ?? 0,
+      /** 创建时推送通知覆盖的用户数 */
+      notifiedCount: a.notifiedCount,
     }));
   }
 
@@ -68,7 +76,30 @@ export class AdminConfigService {
       return { id: input.id };
     }
     const created = await this.prisma.activity.create({ data });
-    return { id: created.id };
+
+    // 新建活动后给全站正常用户推一条站内通知（下线/编辑不重复推）
+    const users = await this.prisma.user.findMany({
+      where: { status: 'ACTIVE' },
+      select: { id: true },
+      take: 5000,
+    });
+    if (users.length > 0) {
+      await this.prisma.activity.update({
+        where: { id: created.id },
+        data: { notifiedCount: users.length },
+      });
+      await this.prisma.notification.createMany({
+        data: users.map((u) => ({
+          userId: u.id,
+          type: 'ACTIVITY',
+          title: `新活动：${created.title}`,
+          content: created.desc ?? `领取可得 ${created.points} 积分，活动期内每人限领一次`,
+          link: '/points',
+        })),
+      });
+    }
+
+    return { id: created.id, notified: users.length };
   }
 
   async removeActivity(id: string) {

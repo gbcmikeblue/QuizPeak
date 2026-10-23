@@ -464,6 +464,8 @@ model Activity {
   startAt   DateTime
   endAt     DateTime
   enabled   Boolean          @default(true)
+  /// 创建时推送通知覆盖的用户数
+  notifiedCount Int          @default(0)
   createdAt DateTime         @default(now())
 
   rewards ActivityReward[]
