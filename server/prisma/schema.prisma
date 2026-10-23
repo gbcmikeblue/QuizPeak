@@ -590,10 +590,13 @@ model Notification {
   title     String
   content   String
   link      String?
+  /// 关联业务 id（活动 id / 工单 id / 竞赛 id / 徽章 code），用于精确统计与去重
+  refId     String?
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 
   @@index([userId, isRead, createdAt])
+  @@index([type, refId])
 }
 
 model SiteConfig {

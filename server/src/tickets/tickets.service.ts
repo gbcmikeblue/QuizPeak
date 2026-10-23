@@ -96,7 +96,7 @@ export class TicketsService {
       }),
     ]);
     if (authorType === 'ADMIN') {
-      await this.notifications.push(ticket.userId, 'TICKET', '客服回复了你的工单', content.slice(0, 80), '/support');
+      await this.notifications.push(ticket.userId, 'TICKET', '客服回复了你的工单', content.slice(0, 80), '/support', id);
     }
     return { ok: true };
   }

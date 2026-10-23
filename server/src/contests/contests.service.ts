@@ -357,6 +357,7 @@ export class ContestsService implements OnModuleInit, OnModuleDestroy {
           `${contest.title} 已结算`,
           `最终第 ${prize.rank} 名，发放 ${prize.points} 积分与 ${prize.xp} XP`,
           `/contests/${contestId}`,
+          contestId,
         );
         awarded += 1;
       }

@@ -136,7 +136,7 @@ export class MeService {
     for (const code of newly) {
       const def = defs.find((d) => d.code === code);
       if (!def) continue;
-      await this.notifications.push(userId, 'BADGE', `获得新徽章：${def.name}`, def.desc, '/me?tab=badges');
+      await this.notifications.push(userId, 'BADGE', `获得新徽章：${def.name}`, def.desc, '/me?tab=badges', def.id);
     }
 
     return {

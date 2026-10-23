@@ -28,11 +28,17 @@ export class AdminConfigService {
   }
 
   async activities() {
-    const [rows, claimed] = await Promise.all([
+    const [rows, claimed, notified] = await Promise.all([
       this.prisma.activity.findMany({ orderBy: { createdAt: 'desc' } }),
       this.prisma.activityReward.groupBy({ by: ['activityId'], _count: { _all: true } }),
+      this.prisma.notification.groupBy({
+        by: ['refId'],
+        where: { type: 'ACTIVITY', refId: { not: null } },
+        _count: { _all: true },
+      }),
     ]);
     const claimMap = new Map(claimed.map((c) => [c.activityId, c._count._all]));
+    const noteMap = new Map(notified.map((n) => [n.refId as string, n._count._all]));
 
     return rows.map((a) => ({
       id: a.id,
@@ -45,8 +51,8 @@ export class AdminConfigService {
       enabled: a.enabled,
       /** 已领取人数 */
       claimCount: claimMap.get(a.id) ?? 0,
-      /** 创建时推送通知覆盖的用户数 */
-      notifiedCount: a.notifiedCount,
+      /** 通知人数：优先按 notification.refId 精确统计，历史数据回退到冗余字段 */
+      notifiedCount: noteMap.get(a.id) ?? a.notifiedCount,
     }));
   }
 
@@ -95,6 +101,7 @@ export class AdminConfigService {
           title: `新活动：${created.title}`,
           content: created.desc ?? `领取可得 ${created.points} 积分，活动期内每人限领一次`,
           link: '/points',
+          refId: created.id,
         })),
       });
     }

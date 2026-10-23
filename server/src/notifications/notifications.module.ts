@@ -8,8 +8,10 @@ export class NotificationsService {
   constructor(private readonly prisma: PrismaService) {}
 
   /** 站内通知：写库（供其他模块调用） */
-  async push(userId: string, type: string, title: string, content: string, link?: string) {
-    return this.prisma.notification.create({ data: { userId, type, title, content, link: link ?? null } });
+  async push(userId: string, type: string, title: string, content: string, link?: string, refId?: string) {
+    return this.prisma.notification.create({
+      data: { userId, type, title, content, link: link ?? null, refId: refId ?? null },
+    });
   }
 
   async list(userId: string, page = 1, pageSize = 20) {
