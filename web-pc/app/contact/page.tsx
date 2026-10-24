@@ -45,7 +45,7 @@ export default async function ContactPage() {
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           {[
             { icon: Mail, label: '邮箱', value: BRAND.email },
-            { icon: Phone, label: '客服电话', value: '工作日 10:00 - 19:00' },
+            { icon: Phone, label: '客服时间', value: '工作日 10:00 - 19:00' },
             { icon: Clock, label: '响应时间', value: '工单 24 小时内' },
           ].map((item) => (
             <div key={item.label} className="card">

@@ -595,6 +595,45 @@ export const enPhrases: Record<string, string> = {
     'Realtime notifications (SSE), orphan upload cleanup, API rate limiting',
   '数据报表：留存 / 答题分布 / 积分发放趋势导出':
     'Reporting: retention, quiz distribution, point-grant trends with export',
+  /* ---------------- 后台系统设置 ---------------- */
+  '按模块拆分为三个子页，左侧菜单可展开切换':
+    'Split into three sub-pages by module — expand them from the sidebar',
+  '保存后 60 秒内生效（规则带服务端缓存）':
+    'Takes effect within 60s after saving (rules are cached server-side)',
+  '站点名称（中文）': 'Site name (Chinese)',
+  '站点名称（英文）': 'Site name (English)',
+  '客服邮箱': 'Support email',
+  '单题时长（秒）': 'Time per question (s)',
+  '关卡解锁正确率（%）': 'Level unlock accuracy (%)',
+  '每关题数': 'Questions per level',
+  '每场免费提示次数': 'Free hints per attempt',
+  '提示消耗积分': 'Hint cost (points)',
+  '每场跳过次数': 'Skips per attempt',
+  '修改管理员密码': 'Change admin password',
+  '默认账号 admin / Admin@123456，上线前务必修改':
+    'Default account admin / Admin@123456 — change it before going live',
+  '原密码': 'Current password',
+  '站点配置已保存': 'Site settings saved',
+  '密码已更新，下次登录请使用新密码': 'Password updated — use the new one next sign-in',
+  /* ---------------- 后台审计 / 搜索记录 ---------------- */
+  '敏感操作审计': 'Sensitive action audit',
+  '记录后台查看完整手机号等敏感操作，用于事后追溯；日志不可修改、不可删除':
+    'Sensitive admin actions (such as revealing a full phone number) are logged for later tracing; entries cannot be edited or deleted.',
+  '操作人': 'Operator',
+  '对象': 'Target',
+  '查看完整手机号': 'Revealed full phone number',
+  '暂无审计记录': 'No audit entries yet',
+  '说明：手机号在用户管理、工单、短信记录中默认脱敏；需要完整号时点「查看完整」，每次都会写入本表。':
+    'Note: phone numbers are masked in user management, tickets and the SMS log. Use “Reveal” when you need the full number — every reveal is written to this table.',
+  '用户在前台删除后仅自己不可见，这里完整保留；可用于分析搜索需求与内容缺口':
+    'When users delete a history entry it only disappears for them — it stays here for demand and content-gap analysis.',
+  '共 {n} 条（本页用户已删 {m} 条）': '{n} in total ({m} deleted by users on this page)',
+  '搜索关键词': 'Search keyword',
+  '最后搜索时间': 'Last searched',
+  '用户已删除': 'Deleted by user',
+  '暂无搜索记录': 'No search records yet',
+  '提示：同一用户重复搜索同一关键词只保留一条记录（更新时间为最后一次搜索）。':
+    'Tip: repeated searches of the same keyword by one user keep a single record, updated to the latest search time.',
   /* ---------------- 后台积分流水 ---------------- */
   '全站积分发放与消耗（不涉及任何货币充值或提现）':
     'All point grants and spending site-wide (no top-ups or cash-outs involved)',
@@ -791,7 +830,8 @@ export const enPhrases: Record<string, string> = {
   '使用中遇到问题，优先通过站内工单反馈（可上传截图、能追踪处理进度）。紧急问题可用下面的方式联系。':
     'For help, use the in-site support ticket first (you can attach screenshots and track progress). Use the channels below for urgent issues.',
   '邮箱': 'Email',
-  '客服电话': 'Support hours',
+  '客服电话': 'Support phone',
+  '客服时间': 'Support hours',
   '响应时间': 'Response time',
   '工作日 10:00 - 19:00': 'Weekdays 10:00–19:00',
   '工单 24 小时内': 'Tickets within 24 hours',
