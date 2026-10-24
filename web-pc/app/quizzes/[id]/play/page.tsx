@@ -6,11 +6,13 @@ import { ArrowRight, CheckCircle2, Lightbulb, SkipForward, Timer, XCircle } from
 
 import type { AnswerResult, FinishResult, PlayData } from '@/lib/api';
 import { authFetch } from '@/lib/auth';
+import { useI18n } from '@/lib/i18n';
 
 function PlayInner() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const params = useSearchParams();
+  const { tt } = useI18n();
   const levelNo = Number(params.get('level') ?? 1);
 
   const [data, setData] = useState<PlayData | null>(null);
@@ -29,29 +31,18 @@ function PlayInner() {
     setHintBusy(true);
     setError('');
     try {
-      const res = await authFetch<{ hint: string; free: boolean; cost: number }>(`/attempts/${data.attemptId}/hint`, {
-        method: 'POST',
-        body: JSON.stringify({ questionId: question.id }),
-      });
-      setHintText(res.free ? res.hint : `${res.hint}（本次消耗 ${res.cost} 积分）`);
+      const res = await authFetch<{ hint: string; free: boolean; cost: number }>(
+        `/attempts/${data.attemptId}/hint`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ questionId: question.id }),
+        },
+      );
+      setHintText(res.free ? res.hint : `${res.hint}${tt('（本次消耗 {n} 积分）', { n: res.cost })}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : '获取提示失败');
+      setError(e instanceof Error ? e.message : tt('获取提示失败'));
     } finally {
       setHintBusy(false);
-    }
-  }
-
-  async function skipCurrent() {
-    if (!data || !question) return;
-    try {
-      await authFetch(`/attempts/${data.attemptId}/skip`, {
-        method: 'POST',
-        body: JSON.stringify({ questionId: question.id }),
-      });
-      setHintText('');
-      await next();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '跳过失败');
     }
   }
 
@@ -67,8 +58,8 @@ function PlayInner() {
         setIndex(startIndex);
         setSecondsLeft(res.questionSeconds);
       })
-      .catch((e) => setError(e instanceof Error ? e.message : '无法开始答题'));
-  }, [id, levelNo]);
+      .catch((e) => setError(e instanceof Error ? e.message : tt('无法开始答题')));
+  }, [id, levelNo, tt]);
 
   const question = data?.questions[index];
   const total = data?.questions.length ?? 0;
@@ -91,12 +82,12 @@ function PlayInner() {
         });
         setFeedback(res);
       } catch (e) {
-        setError(e instanceof Error ? e.message : '提交失败');
+        setError(e instanceof Error ? e.message : tt('提交失败'));
       } finally {
         setBusy(false);
       }
     },
-    [busy, data, question, secondsLeft, selected],
+    [busy, data, question, secondsLeft, selected, tt],
   );
 
   // 单题倒计时，归零自动提交
@@ -121,7 +112,7 @@ function PlayInner() {
         });
         router.replace(`/quizzes/${id}/result?attemptId=${result.attemptId}`);
       } catch (e) {
-        setError(e instanceof Error ? e.message : '交卷失败');
+        setError(e instanceof Error ? e.message : tt('交卷失败'));
         setFinishing(false);
       }
       return;
@@ -129,6 +120,7 @@ function PlayInner() {
     setIndex((i) => i + 1);
     setSelected([]);
     setFeedback(null);
+    setHintText('');
     setSecondsLeft(data.questionSeconds);
   }
 
@@ -139,9 +131,10 @@ function PlayInner() {
         method: 'POST',
         body: JSON.stringify({ questionId: question.id }),
       });
+      setHintText('');
       await next();
     } catch (e) {
-      setError(e instanceof Error ? e.message : '跳过失败');
+      setError(e instanceof Error ? e.message : tt('跳过失败'));
     }
   }
 
@@ -157,8 +150,12 @@ function PlayInner() {
       <main className="container-page py-16 text-center text-sm text-red-600">
         {error}
         <div className="mt-4">
-          <button type="button" onClick={() => router.back()} className="btn-outline h-9 px-4 text-[13px]">
-            返回
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="btn-outline h-9 px-4 text-[13px]"
+          >
+            {tt('返回')}
           </button>
         </div>
       </main>
@@ -166,7 +163,7 @@ function PlayInner() {
   }
 
   if (!data || !question) {
-    return <div className="container-page py-16 text-sm text-[#667085]">准备中…</div>;
+    return <div className="container-page py-16 text-sm text-[#667085]">{tt('准备中…')}</div>;
   }
 
   const progressPercent = Math.round(((index + 1) / total) * 100);
@@ -186,14 +183,19 @@ function PlayInner() {
     <main className="min-h-[calc(100vh-4rem)] bg-brand-soft/60 py-8">
       <div className="mx-auto w-full max-w-[720px] px-5">
         <div className="flex items-center justify-between text-sm text-[#4A6B5C]">
-          <span>第 {levelNo} 关 · {data.quiz.title}</span>
+          <span>
+            {tt('第 {n} 关', { n: levelNo })} · {data.quiz.title}
+          </span>
           <span className="rounded-full bg-white px-3 py-1 font-medium text-[#0B3B27]">
-            第 {index + 1} / {total} 题
+            {tt('第 {n} / {total} 题', { n: index + 1, total })}
           </span>
         </div>
 
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white">
-          <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${progressPercent}%` }} />
+          <div
+            className="h-full rounded-full bg-brand transition-all"
+            style={{ width: `${progressPercent}%` }}
+          />
         </div>
 
         <section className="card mt-4">
@@ -208,7 +210,9 @@ function PlayInner() {
             </span>
           </div>
 
-          {multi ? <p className="mt-3 text-xs text-brand">本题可多选，需全部选对才得分</p> : null}
+          {multi ? (
+            <p className="mt-3 text-xs text-brand">{tt('本题可多选，需全部选对才得分')}</p>
+          ) : null}
 
           <div className="mt-4 space-y-2.5">
             {question.options.map((option, i) => {
@@ -252,18 +256,27 @@ function PlayInner() {
             >
               <p className="flex items-center gap-1.5 font-medium">
                 {feedback.isCorrect ? <CheckCircle2 size={15} /> : <XCircle size={15} />}
-                {feedback.isCorrect ? '回答正确' : '回答错误'}
-                {!feedback.isCorrect ? <span className="ml-2 font-normal">正确答案：{answerText}</span> : null}
+                {feedback.isCorrect ? tt('回答正确') : tt('回答错误')}
+                {!feedback.isCorrect ? (
+                  <span className="ml-2 font-normal">
+                    {tt('正确答案：')}
+                    {answerText}
+                  </span>
+                ) : null}
               </p>
               {feedback.analysis ? (
-                <p className="mt-1.5 leading-6 text-[#475467]">解析：{feedback.analysis}</p>
+                <p className="mt-1.5 leading-6 text-[#475467]">
+                  {tt('解析：')}
+                  {feedback.analysis}
+                </p>
               ) : null}
             </div>
           ) : null}
 
           {hintText ? (
             <div className="mt-3 rounded-lg bg-[#FFF7E6] px-3 py-2 text-sm leading-6 text-[#8A6A1F]">
-              提示：{hintText}
+              {tt('提示：')}
+              {hintText}
             </div>
           ) : null}
 
@@ -279,38 +292,41 @@ function PlayInner() {
                     disabled={busy || selected.length === 0}
                     className="btn-primary h-10 px-5 text-[13px]"
                   >
-                    {busy ? '提交中…' : '提交答案'}
+                    {busy ? tt('提交中…') : tt('提交答案')}
                   </button>
                   <button
                     type="button"
                     onClick={useHint}
                     disabled={hintBusy}
                     className="btn-outline h-10 px-3 text-[13px]"
-                    title="每场首次免费，之后消耗积分"
+                    title={tt('每场首次免费，之后消耗积分')}
                   >
-                    <Lightbulb size={14} /> 提示
-                  </button>
-                  <button type="button" onClick={skipCurrent} className="btn-outline h-10 px-3 text-[13px]" title="跳过按答错计分">
-                    <SkipForward size={14} /> 跳过
+                    <Lightbulb size={14} /> {tt('提示')}
                   </button>
                   <button
                     type="button"
                     onClick={skip}
                     className="btn-outline h-10 px-3 text-[13px]"
-                    title="跳过本题"
+                    title={tt('跳过按答错计分')}
                   >
-                    <SkipForward size={14} /> 跳过
+                    <SkipForward size={14} /> {tt('跳过')}
                   </button>
                 </>
               ) : (
-                <button type="button" onClick={next} className="btn-primary h-10 px-5 text-[13px]" disabled={finishing}>
-                  {finishing ? '结算中…' : isLast ? '查看结果' : '下一题'}
+                <button
+                  type="button"
+                  onClick={next}
+                  className="btn-primary h-10 px-5 text-[13px]"
+                  disabled={finishing}
+                >
+                  {finishing ? tt('结算中…') : isLast ? tt('查看结果') : tt('下一题')}
                   <ArrowRight size={14} />
                 </button>
               )}
             </div>
             <span className="flex items-center gap-1 text-[11px] text-[#98A2B3]">
-              <Lightbulb size={13} /> 每题限时 {data.questionSeconds} 秒，超时按答错
+              <Lightbulb size={13} />{' '}
+              {tt('每题限时 {n} 秒，超时按答错', { n: data.questionSeconds })}
             </span>
           </div>
         </section>
@@ -320,8 +336,11 @@ function PlayInner() {
 }
 
 export default function PlayPage() {
+  const { tt } = useI18n();
   return (
-    <Suspense fallback={<div className="container-page py-16 text-sm text-[#667085]">加载中…</div>}>
+    <Suspense
+      fallback={<div className="container-page py-16 text-sm text-[#667085]">{tt('加载中…')}</div>}
+    >
       <PlayInner />
     </Suspense>
   );
