@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { CircleCheck, CircleDashed, Coins, RefreshCw, Trophy, Users } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { useI18n } from '@/lib/i18n';
 
 interface Health {
   status: string;
@@ -53,6 +54,7 @@ const TODO = [
 ];
 
 export default function DashboardPage() {
+  const { tt, date } = useI18n();
   const [health, setHealth] = useState<Health | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [error, setError] = useState('');
@@ -69,22 +71,44 @@ export default function DashboardPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-xl font-semibold">仪表盘</h1>
+        <h1 className="text-xl font-semibold">{tt('仪表盘')}</h1>
         <p className="mt-1 text-sm text-[#667085]">
-          PC 端主链路（登录 → 答题 → 竞赛 → 积分 → 榜单 → 个人中心 → 工单通知）与后台运营模块均已打通；H5 端（uni-app）开发中。
+          {tt(
+            'PC 端主链路（登录 → 答题 → 竞赛 → 积分 → 榜单 → 个人中心 → 工单通知）与后台运营模块均已打通；H5 端（uni-app）开发中。',
+          )}
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          { label: '今日新增用户', value: stats?.todayUsers, hint: `累计 ${stats?.users ?? 0} 位用户`, icon: Users },
-          { label: '今日答题次数', value: stats?.todayAttempts, hint: `累计 ${stats?.attempts ?? 0} 次交卷`, icon: Trophy },
-          { label: '今日发放积分', value: stats?.pointsToday, hint: '含签到/广告/点赞/活动/答题', icon: Coins },
-          { label: '待结算竞赛', value: stats?.pendingSettle, hint: `共 ${stats?.contests ?? 0} 场竞赛`, icon: RefreshCw },
+          {
+            label: '今日新增用户',
+            value: stats?.todayUsers,
+            hint: tt('累计 {n} 位用户', { n: stats?.users ?? 0 }),
+            icon: Users,
+          },
+          {
+            label: '今日答题次数',
+            value: stats?.todayAttempts,
+            hint: tt('累计 {n} 次交卷', { n: stats?.attempts ?? 0 }),
+            icon: Trophy,
+          },
+          {
+            label: '今日发放积分',
+            value: stats?.pointsToday,
+            hint: tt('含签到/广告/点赞/活动/答题'),
+            icon: Coins,
+          },
+          {
+            label: '待结算竞赛',
+            value: stats?.pendingSettle,
+            hint: tt('共 {n} 场竞赛', { n: stats?.contests ?? 0 }),
+            icon: RefreshCw,
+          },
         ].map(({ label, value, hint, icon: Icon }) => (
           <div key={label} className="card">
             <div className="flex items-center justify-between">
-              <span className="text-[13px] text-[#667085]">{label}</span>
+              <span className="text-[13px] text-[#667085]">{tt(label)}</span>
               <Icon size={16} className="text-brand" />
             </div>
             <p className="mt-3 text-2xl font-semibold">{value ?? '—'}</p>
@@ -95,37 +119,35 @@ export default function DashboardPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="card">
-          <h2 className="text-[15px] font-semibold">服务状态</h2>
+          <h2 className="text-[15px] font-semibold">{tt('服务状态')}</h2>
           <div className="mt-3 space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-[#667085]">API</span>
               <span className={health ? 'text-brand' : 'text-[#98A2B3]'}>
-                {health ? health.status : error ? '不可用' : '检测中…'}
+                {health ? health.status : error ? tt('不可用') : tt('检测中…')}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#667085]">数据库</span>
+              <span className="text-[#667085]">{tt('数据库')}</span>
               <span className={health?.db === 'up' ? 'text-brand' : 'text-[#98A2B3]'}>
                 {health ? health.db : '—'}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#667085]">检测时间</span>
-              <span className="text-[#475467]">
-                {health ? new Date(health.time).toLocaleString('zh-CN') : '—'}
-              </span>
+              <span className="text-[#667085]">{tt('检测时间')}</span>
+              <span className="text-[#475467]">{health ? date(health.time, true) : '—'}</span>
             </div>
             {error ? <p className="text-xs text-red-600">{error}</p> : null}
           </div>
         </div>
 
         <div className="card">
-          <h2 className="text-[15px] font-semibold">下一步</h2>
+          <h2 className="text-[15px] font-semibold">{tt('下一步')}</h2>
           <ul className="mt-3 space-y-2 text-sm text-[#475467]">
             {TODO.slice(0, 4).map((t) => (
               <li key={t} className="flex gap-2">
                 <CircleDashed size={15} className="mt-0.5 shrink-0 text-[#98A2B3]" />
-                {t}
+                {tt(t)}
               </li>
             ))}
           </ul>
@@ -134,23 +156,23 @@ export default function DashboardPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="card">
-          <h2 className="text-[15px] font-semibold">已完成</h2>
+          <h2 className="text-[15px] font-semibold">{tt('已完成')}</h2>
           <ul className="mt-3 space-y-2 text-sm text-[#475467]">
             {DONE.map((t) => (
               <li key={t} className="flex gap-2">
                 <CircleCheck size={15} className="mt-0.5 shrink-0 text-brand" />
-                {t}
+                {tt(t)}
               </li>
             ))}
           </ul>
         </div>
         <div className="card">
-          <h2 className="text-[15px] font-semibold">待开发</h2>
+          <h2 className="text-[15px] font-semibold">{tt('待开发')}</h2>
           <ul className="mt-3 space-y-2 text-sm text-[#475467]">
             {TODO.map((t) => (
               <li key={t} className="flex gap-2">
                 <CircleDashed size={15} className="mt-0.5 shrink-0 text-[#98A2B3]" />
-                {t}
+                {tt(t)}
               </li>
             ))}
           </ul>

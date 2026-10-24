@@ -486,8 +486,74 @@ export const enPhrases: Record<string, string> = {
   '选择左侧工单查看对话': 'Pick a ticket to view the conversation',
   '补充说明…': 'Add a note…',
   '发送': 'Send',
-  '待处理': 'Pending',
-  '处理中': 'In progress',
+  /* ---------------- 后台仪表盘 ---------------- */
+  'PC 端主链路（登录 → 答题 → 竞赛 → 积分 → 榜单 → 个人中心 → 工单通知）与后台运营模块均已打通；H5 端（uni-app）开发中。':
+    'The PC main flow (sign-in → quizzes → contests → points → leaderboard → profile → tickets/notifications) and all admin modules are live; H5 (uni-app) is in progress.',
+  '今日新增用户': 'New users today',
+  '累计 {n} 位用户': '{n} users in total',
+  '今日答题次数': 'Attempts today',
+  '累计 {n} 次交卷': '{n} submissions in total',
+  '今日发放积分': 'Points granted today',
+  '含签到/广告/点赞/活动/答题': 'Includes check-ins, ads, likes, events and quizzes',
+  '待结算竞赛': 'Contests pending settlement',
+  '共 {n} 场竞赛': '{n} contests in total',
+  '服务状态': 'Service status',
+  '数据库': 'Database',
+  '检测时间': 'Checked at',
+  '不可用': 'Unavailable',
+  '检测中…': 'Checking…',
+  '下一步': 'Next steps',
+  '待开发': 'To do',
+  '认证：验证码 / 密码双登录、注册、找回密码、Token 刷新、封禁拦截':
+    'Auth: SMS & password sign-in, registration, password reset, token refresh, ban enforcement',
+  '答题：题库列表 / 详情（10 关）/ 解锁扣积分 / 单题 120s / 判分 / 交卷 / 逐题解析':
+    'Quizzes: list & detail (10 levels), paid unlock, 120s per question, grading, submission, per-question review',
+  '答题增强：Hint（首次免费后扣积分）、Skip（每场 3 次）、断点续答、关卡按正确率解锁':
+    'Quiz extras: hint (first free, then points), skip (3 per attempt), resume, accuracy-based level unlock',
+  '竞赛：列表 / 详情 / 报名 / 作答 / 榜单；结束后统一结算发奖（幂等 + 每 5 分钟自动扫描）':
+    'Contests: list, detail, entry, play, leaderboard; idempotent settlement with a 5-minute sweep',
+  '积分：签到 / 看广告 / 点赞 / 活动 / 新人礼 / 邀请奖励，流水幂等 + 余额快照':
+    'Points: check-in, ads, likes, events, welcome bonus, invites; idempotent ledger with balance snapshots',
+  '排行榜：总榜（XP）/ 月榜（本月积分）+ 行内点赞 + 我的排名':
+    'Leaderboard: all-time XP and monthly points, inline likes, my rank',
+  '个人中心：答题与竞赛记录、收藏、徽章（惰性判定）、资料与改密、头像选择':
+    'Profile: quiz and contest history, favorites, badges, profile & password, avatar picker',
+  '内容：文章列表 / 详情 / 后台发布下线；About / Contact / 隐私政策':
+    'Content: article list/detail with admin publish, plus About / Contact / Privacy pages',
+  '服务：客服工单全链路、站内通知（铃铛未读 + 列表页）、分享':
+    'Support: full ticket flow, in-site notifications (bell + list page), sharing',
+  '搜索：全局搜索 + 输入联想 + 历史云端同步 + 用户软删除（后台仍可见）':
+    'Search: global search, suggestions, synced history, user soft-delete (still visible in admin)',
+  '安全：手机号默认脱敏，查看完整号需二次确认并写入「操作审计」':
+    'Security: phone numbers masked by default; revealing one needs confirmation and is audited',
+  '后台：题库（关卡生成 / 题目 CRUD / Banner 上传 / Excel 模板·导入·导出）':
+    'Admin: quizzes (level generation, question CRUD, banner upload, Excel template/import/export)',
+  '后台：竞赛管理（选题 / 奖励 / 关闭 / 结算）、用户管理（调积分 / 封禁）':
+    'Admin: contest management (questions, rewards, close, settle) and user management (adjust points, ban)',
+  '后台：积分流水、积分任务（9 项数值 + 活动编辑与二次确认）、内容管理':
+    'Admin: point ledger, point tasks (9 tunables, event editing with confirmation), content management',
+  '后台：头像库（emoji 增改删 + 引用保护）、徽章阈值、站点与规则、管理员改密':
+    'Admin: avatar library (emoji CRUD with reference guard), badge thresholds, site rules, admin password',
+  '后台：二级菜单、设置页拆分为三个子页、仪表盘真实统计、搜索记录、短信记录':
+    'Admin: nested menu, settings split into three pages, real dashboard stats, search and SMS logs',
+  '小游戏：Wordling 三变体 + Hexling（16 字母拼词，词典校验）':
+    'Games: three Wordling variants plus Hexling (16-letter spelling with dictionary checks)',
+  '工程：卡片规范统一、导航高亮、404 / 500、开发构建提速（dev/watch/verify/clean）':
+    'Engineering: unified cards, nav highlight, 404/500, faster dev tooling (dev/watch/verify/clean)',
+  '权限：后台四角色（超级管理员 / 运营 / 客服 / 只读）+ 路由级权限矩阵，服务端 Guard 与前端菜单双重校验':
+    'Permissions: four admin roles (super admin / operator / support / read-only) with route-level matrix, enforced by both guard and menu',
+  '部署：Dockerfile ×3 + Nginx 反代 + docker-compose + 备份 / 健康检查脚本 + 上线手册':
+    'Deployment: three Dockerfiles, Nginx reverse proxy, docker-compose, backup/healthcheck scripts, launch guide',
+  'H5（uni-app，web-h5）主链路开发中：首页 / 题库 / 答题 / 排行榜 / 我的；小程序为同一套代码的编译目标':
+    'H5 (uni-app): main flow shipped — home, quizzes, play, leaderboard, profile; mini program builds from the same code',
+  '上线收尾：域名 / 证书 / HTTPS 实配、真实密钥、监控告警、备份恢复演练':
+    'Launch wrap-up: domain, certificate, HTTPS, real secrets, monitoring, backup restore drill',
+  '第三方接入：阿里云短信（当前 console 打印验证码）、对象存储 OSS（当前落本机磁盘）':
+    'Third-party: Aliyun SMS (codes currently logged) and OSS (files currently on local disk)',
+  '通知实时推送（SSE）、图片孤儿文件清理、接口限流':
+    'Realtime notifications (SSE), orphan upload cleanup, API rate limiting',
+  '数据报表：留存 / 答题分布 / 积分发放趋势导出':
+    'Reporting: retention, quiz distribution, point-grant trends with export',
   '已关闭': 'Closed',
   '其他': 'Other',
   '客服': 'Support',
