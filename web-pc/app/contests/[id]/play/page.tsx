@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { ArrowRight, CheckCircle2, Loader2, Timer, Trophy, XCircle } from 'lucide-react';
 import type { AnswerResult, ContestFinish, ContestPlay } from '@/lib/api';
 import { authFetch } from '@/lib/auth';
+import { useI18n } from '@/lib/i18n';
 
 function mmss(sec: number) {
   return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
@@ -13,6 +14,7 @@ function mmss(sec: number) {
 
 export default function ContestPlayPage() {
   const { id } = useParams<{ id: string }>();
+  const { tt } = useI18n();
   const [data, setData] = useState<ContestPlay | null>(null);
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
@@ -30,9 +32,9 @@ export default function ContestPlayPage() {
       setIndex(first === -1 ? res.questions.length - 1 : first);
       setSecondsLeft(res.questionSeconds);
     } catch (e) {
-      setError(e instanceof Error ? e.message : '无法开始竞赛');
+      setError(e instanceof Error ? e.message : tt('无法开始竞赛'));
     }
-  }, [id]);
+  }, [id, tt]);
 
   useEffect(() => {
     void load();
@@ -57,12 +59,12 @@ export default function ContestPlayPage() {
         });
         setFeedback(res);
       } catch (e) {
-        setError(e instanceof Error ? e.message : '提交失败');
+        setError(e instanceof Error ? e.message : tt('提交失败'));
       } finally {
         setBusy(false);
       }
     },
-    [busy, data, question, secondsLeft, selected],
+    [busy, data, question, secondsLeft, selected, tt],
   );
 
   useEffect(() => {
@@ -92,7 +94,7 @@ export default function ContestPlayPage() {
       });
       setResult(res);
     } catch (e) {
-      setError(e instanceof Error ? e.message : '交卷失败');
+      setError(e instanceof Error ? e.message : tt('交卷失败'));
     } finally {
       setBusy(false);
     }
@@ -108,33 +110,37 @@ export default function ContestPlayPage() {
       <main className="container-page py-12">
         <div className="mx-auto max-w-[560px]">
           <div className="card text-center">
-            <p className="text-sm text-[#667085]">交卷完成</p>
+            <p className="text-sm text-[#667085]">{tt('交卷完成')}</p>
             <p className="mt-2 text-3xl font-bold text-brand">
               {result.score} / {result.totalScore}
             </p>
             <p className="mt-1 text-sm text-[#475467]">
-              答对 {result.correctCount}/{result.total} · 用时 {mmss(result.totalTimeSec)}
+              {tt('答对 {n}/{total} · 用时 {time}', {
+                n: result.correctCount,
+                total: result.total,
+                time: mmss(result.totalTimeSec),
+              })}
             </p>
             <p className="mt-3 inline-flex items-center gap-1 rounded-full bg-brand-soft px-3 py-1 text-sm text-[#0B3B27]">
-              <Trophy size={14} className="text-[#F5A623]" /> 当前第 {result.rank} 名
+              <Trophy size={14} className="text-[#F5A623]" /> {tt('当前第 {n} 名', { n: result.rank })}
             </p>
             {result.pendingSettlement ? (
               <p className="mt-2 text-xs leading-5 text-[#98A2B3]">
-                竞赛结束后按最终榜单统一结算并发奖，名次可能随他人成绩变化
+                {tt('竞赛结束后按最终榜单统一结算并发奖，名次可能随他人成绩变化')}
               </p>
             ) : result.pointsEarned > 0 ? (
               <p className="mt-2 text-sm text-brand">
-                获得 {result.pointsEarned} 积分 · {result.xpEarned} XP
+                {tt('获得 {n} 积分 · {xp} XP', { n: result.pointsEarned, xp: result.xpEarned })}
               </p>
             ) : (
-              <p className="mt-2 text-xs text-[#98A2B3]">未进入奖励名次，下次再来</p>
+              <p className="mt-2 text-xs text-[#98A2B3]">{tt('未进入奖励名次，下次再来')}</p>
             )}
             <div className="mt-6 flex justify-center gap-2">
               <Link href={`/contests/${id}`} className="btn-primary h-10 px-5 text-[13px]">
-                查看排行榜
+                {tt('查看排行榜')}
               </Link>
               <Link href="/contests" className="btn-outline h-10 px-5 text-[13px]">
-                返回竞赛列表
+                {tt('返回竞赛列表')}
               </Link>
             </div>
           </div>
@@ -146,11 +152,15 @@ export default function ContestPlayPage() {
   if (!data || !question) {
     return (
       <main className="container-page py-16 text-center text-sm">
-        {error ? <span className="text-red-600">{error}</span> : <span className="text-[#667085]">准备中…</span>}
+        {error ? (
+          <span className="text-red-600">{error}</span>
+        ) : (
+          <span className="text-[#667085]">{tt('准备中…')}</span>
+        )}
         {error ? (
           <div className="mt-4">
             <Link href={`/contests/${id}`} className="btn-outline h-9 px-4 text-[13px]">
-              返回竞赛
+              {tt('返回竞赛')}
             </Link>
           </div>
         ) : null}
@@ -171,7 +181,7 @@ export default function ContestPlayPage() {
         <div className="flex items-center justify-between text-sm text-[#4A6B5C]">
           <span>{data.contest.title}</span>
           <span className="rounded-full bg-white px-3 py-1 font-medium text-[#0B3B27]">
-            第 {index + 1} / {total} 题
+            {tt('第 {n} / {total} 题', { n: index + 1, total })}
           </span>
         </div>
 
@@ -191,7 +201,9 @@ export default function ContestPlayPage() {
             </span>
           </div>
 
-          {multi ? <p className="mt-3 text-xs text-brand">本题可多选，需全部选对才得分</p> : null}
+          {multi ? (
+            <p className="mt-3 text-xs text-brand">{tt('本题可多选，需全部选对才得分')}</p>
+          ) : null}
 
           <div className="mt-4 space-y-2.5">
             {question.options.map((option, i) => {
@@ -234,9 +246,16 @@ export default function ContestPlayPage() {
             >
               <p className="flex items-center gap-1.5 font-medium">
                 {feedback.isCorrect ? <CheckCircle2 size={15} /> : <XCircle size={15} />}
-                {feedback.isCorrect ? '回答正确' : `回答错误，正确答案：${answerText}`}
+                {feedback.isCorrect
+                  ? tt('回答正确')
+                  : tt('回答错误，正确答案：{answer}', { answer: answerText })}
               </p>
-              {feedback.analysis ? <p className="mt-1.5 leading-6 text-[#475467]">解析：{feedback.analysis}</p> : null}
+              {feedback.analysis ? (
+                <p className="mt-1.5 leading-6 text-[#475467]">
+                  {tt('解析：')}
+                  {feedback.analysis}
+                </p>
+              ) : null}
             </div>
           ) : null}
 
@@ -246,7 +265,7 @@ export default function ContestPlayPage() {
             {feedback ? (
               <button type="button" className="btn-primary h-10 px-5 text-[13px]" onClick={next} disabled={busy}>
                 {busy ? <Loader2 size={14} className="animate-spin" /> : null}
-                {isLast ? '交卷' : '下一题'}
+                {isLast ? tt('交卷') : tt('下一题')}
                 <ArrowRight size={14} />
               </button>
             ) : (
@@ -256,7 +275,7 @@ export default function ContestPlayPage() {
                 onClick={() => submit(false)}
                 disabled={busy || selected.length === 0}
               >
-                {busy ? '提交中…' : '提交答案'}
+                {busy ? tt('提交中…') : tt('提交答案')}
               </button>
             )}
           </div>
