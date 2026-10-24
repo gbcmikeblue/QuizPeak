@@ -595,6 +595,41 @@ export const enPhrases: Record<string, string> = {
     'Realtime notifications (SSE), orphan upload cleanup, API rate limiting',
   '数据报表：留存 / 答题分布 / 积分发放趋势导出':
     'Reporting: retention, quiz distribution, point-grant trends with export',
+  /* ---------------- 后台管理员账号 ---------------- */
+  '按角色分配权限，菜单与接口同时生效；只有超级管理员能管理账号':
+    'Permissions are granted by role and enforced by both menu and API; only super admins manage accounts.',
+  '新建管理员': 'New administrator',
+  '显示名称': 'Display name',
+  '初始密码': 'Initial password',
+  '≥8 位含字母数字': '≥8 chars with letters and digits',
+  '角色': 'Role',
+  '创建': 'Create',
+  '账号列表（{n}）': 'Accounts ({n})',
+  '名称': 'Name',
+  '最后登录': 'Last sign-in',
+  '从未登录': 'Never signed in',
+  '（自己）': ' (you)',
+  '已停用': 'Disabled',
+  '停用': 'Disable',
+  '为 {username} 设置新密码（≥8 位，含字母和数字）':
+    'Set a new password for {username} (≥8 chars with letters and digits)',
+  '已重置 {username} 的密码': 'Password reset for {username}',
+  '重置失败': 'Reset failed',
+  '已创建账号 {username}（{role}）': 'Created account {username} ({role})',
+  '创建失败': 'Create failed',
+  '已将 {username} 的角色改为 {role}': 'Changed {username} to role {role}',
+  '已停用 {username}': 'Disabled {username}',
+  '已启用 {username}': 'Enabled {username}',
+  '角色权限矩阵': 'Role–permission matrix',
+  '只读；权限点与接口路径绑定，改动需调整代码中的映射表':
+    'Read-only: permissions are bound to API routes, so changes require updating the mapping in code.',
+  '短信': 'SMS',
+  '审计': 'Audit',
+  '内容': 'Content',
+  '超级管理员': 'Super admin',
+  '运营': 'Operator',
+  '积分运营': 'Points operator',
+  '只读': 'Read-only',
   /* ---------------- 后台徽章 / 头像库 ---------------- */
   '调整达成条件与启停；徽章判定在用户进入「我的徽章」时惰性触发':
     'Tune thresholds and toggle badges; awarding is evaluated lazily when a user opens “My badges”.',
