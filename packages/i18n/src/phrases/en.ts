@@ -595,6 +595,41 @@ export const enPhrases: Record<string, string> = {
     'Realtime notifications (SSE), orphan upload cleanup, API rate limiting',
   '数据报表：留存 / 答题分布 / 积分发放趋势导出':
     'Reporting: retention, quiz distribution, point-grant trends with export',
+  /* ---------------- 后台徽章 / 头像库 ---------------- */
+  '调整达成条件与启停；徽章判定在用户进入「我的徽章」时惰性触发':
+    'Tune thresholds and toggle badges; awarding is evaluated lazily when a user opens “My badges”.',
+  '徽章列表（{n}）': 'Badges ({n})',
+  '条件': 'Condition',
+  '阈值': 'Threshold',
+  '已发放': 'Awarded',
+  '启用': 'Enabled',
+  '徽章「{name}」已更新': 'Badge “{name}” updated',
+  '暂无徽章数据': 'No badges yet',
+  '被用户使用的头像只能修改（改后引用者同步更新），不能删除；默认头像不可删除':
+    'Avatars in use can only be edited (references update automatically) — not deleted. The default avatar cannot be deleted.',
+  '全部头像（{n}）': 'All avatars ({n})',
+  '粘贴一个 emoji 字符即可（不是图片，也不要填 U+1F43C 这类代码）':
+    'Just paste an emoji character — not an image, and not a code like ',
+  '直接粘贴一个 emoji 字符，例如 🐲': 'Paste an emoji character, e.g. 🐲',
+  '新增 emoji': 'Add emoji',
+  '默认': 'Default',
+  '可选': 'Optional',
+  '用了 {n} 人': 'used by {n}',
+  '设默认': 'Set default',
+  '修改': 'Edit',
+  '修改头像 emoji（已使用该头像的用户会同步更新）':
+    'Edit avatar emoji (users already using it update automatically)',
+  '确认删除头像 {emoji}？被用户使用的头像无法删除。':
+    'Delete avatar {emoji}? Avatars in use cannot be deleted.',
+  '已新增头像': 'Avatar added',
+  '新增失败': 'Add failed',
+  '已修改，{n} 位用户的头像同步更新': 'Updated — {n} users’ avatars refreshed',
+  '已修改': 'Updated',
+  '已将 {emoji} 设为默认头像，新注册用户会自动使用':
+    '{emoji} is now the default avatar; new users get it automatically',
+  '设置失败': 'Update failed',
+  '删除失败': 'Delete failed',
+  '已删除': 'Deleted',
   /* ---------------- 后台系统设置 ---------------- */
   '按模块拆分为三个子页，左侧菜单可展开切换':
     'Split into three sub-pages by module — expand them from the sidebar',
