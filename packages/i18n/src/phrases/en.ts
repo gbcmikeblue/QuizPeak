@@ -487,6 +487,47 @@ export const enPhrases: Record<string, string> = {
   '补充说明…': 'Add a note…',
   '发送': 'Send',
   /* ---------------- 后台仪表盘 ---------------- */
+  /* ---------------- 后台工单 ---------------- */
+  '处理用户反馈，回复会同步到用户端；变更状态需二次确认，关闭工单必须填写处理说明。':
+    'Handle user feedback — replies reach the user. Status changes need confirmation, and closing requires a handling note.',
+  '当前筛选 {n} 条 / 全部 {total} 条': '{n} in this filter / {total} total',
+  '工单': 'tickets',
+  '{n} 条': '{n} items',
+  '该状态下暂无工单': 'No tickets in this status',
+  '查看全部工单': 'View all tickets',
+  '{n} 条往来': '{n} messages',
+  '变更状态：': 'Change status:',
+  '当前': 'current',
+  '提交中': 'Submitting',
+  '该工单不在当前筛选结果内（可能刚被改到其它状态），列表已刷新。':
+    'This ticket is not in the current filter (its status just changed). The list has been refreshed.',
+  '用户': 'User',
+  '输入回复内容…': 'Type a reply…',
+  '回复': 'Reply',
+  '选择左侧工单查看详情': 'Pick a ticket to see the details',
+  '确认变更工单状态': 'Confirm status change',
+  '状态变更会通知用户，说明内容会作为客服回复展示在会话中。':
+    'The user is notified, and your note is posted as a support reply in the conversation.',
+  '常用说明': 'Common notes',
+  '处理说明': 'Handling note',
+  '*必填': '* required',
+  '（选填，填写后会回复给用户）': ' (optional; sent to the user as a reply)',
+  '例如：已协助用户找回积分，问题闭环，工单关闭':
+    'e.g. Points restored for the user, issue resolved, closing the ticket',
+  '可补充处理进度，例如：已收到反馈，正在核查题库数据':
+    'Add progress, e.g. Received your report and checking the quiz data',
+  '填写至少 2 个字后才能确认关闭': 'Enter at least 2 characters to confirm closing',
+  '说明会作为客服回复出现在会话中': 'The note appears as a support reply in the conversation',
+  '确认变更': 'Confirm change',
+  '已解决用户问题，工单关闭': 'Resolved the issue and closed the ticket',
+  '重复提交，已合并处理': 'Duplicate report, merged with an existing ticket',
+  '信息不足，请补充截图或订单号后重新提交': 'Not enough info — please resubmit with screenshots or an ID',
+  '内容不符合社区规范，已按规则处理': 'Content violated community rules and was handled accordingly',
+  '关闭工单需要填写处理说明（至少 2 个字），该说明会回复给用户':
+    'Closing requires a handling note (at least 2 characters); it is sent to the user',
+  '回复已发送，用户会收到站内通知': 'Reply sent — the user gets a notification',
+  '工单已变更为「{label}」': 'Ticket moved to “{label}”',
+  '，处理说明已回复给用户': ', and the note was sent to the user',
   'PC 端主链路（登录 → 答题 → 竞赛 → 积分 → 榜单 → 个人中心 → 工单通知）与后台运营模块均已打通；H5 端（uni-app）开发中。':
     'The PC main flow (sign-in → quizzes → contests → points → leaderboard → profile → tickets/notifications) and all admin modules are live; H5 (uni-app) is in progress.',
   '今日新增用户': 'New users today',
@@ -554,6 +595,14 @@ export const enPhrases: Record<string, string> = {
     'Realtime notifications (SSE), orphan upload cleanup, API rate limiting',
   '数据报表：留存 / 答题分布 / 积分发放趋势导出':
     'Reporting: retention, quiz distribution, point-grant trends with export',
+  '查看完整': 'Reveal',
+  '隐藏': 'Hide',
+  '查看完整号码（会记录审计日志）': 'Reveal the full number (audit-logged)',
+  '查看完整手机号属于敏感操作，系统会记录操作日志。确认查看？':
+    'Revealing a full phone number is a sensitive action and is audit-logged. Continue?',
+  '查看失败': 'Failed to reveal',
+  '待处理': 'Pending',
+  '处理中': 'In progress',
   '已关闭': 'Closed',
   '其他': 'Other',
   '客服': 'Support',

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { apiFetch } from '@/lib/api';
+import { useI18n } from '@/lib/i18n';
 
 /**
  * 后台手机号展示：默认显示脱敏值，点「查看完整」需二次确认，
@@ -18,12 +19,15 @@ export function RevealPhone({
   masked: string;
   className?: string;
 }) {
+  const { tt } = useI18n();
   const [value, setValue] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
   async function reveal() {
-    const ok = window.confirm('查看完整手机号属于敏感操作，系统会记录操作日志。确认查看？');
+    const ok = window.confirm(
+      tt('查看完整手机号属于敏感操作，系统会记录操作日志。确认查看？'),
+    );
     if (!ok) return;
     setBusy(true);
     setError('');
@@ -34,7 +38,7 @@ export function RevealPhone({
       });
       setValue(res.phone);
     } catch (e) {
-      setError(e instanceof Error ? e.message : '查看失败');
+      setError(e instanceof Error ? e.message : tt('查看失败'));
     } finally {
       setBusy(false);
     }
@@ -44,8 +48,12 @@ export function RevealPhone({
     return (
       <span className={`inline-flex items-center gap-1.5 tabular-nums ${className}`}>
         {value}
-        <button type="button" onClick={() => setValue(null)} className="text-[11px] text-[#98A2B3] hover:text-[#475467]">
-          隐藏
+        <button
+          type="button"
+          onClick={() => setValue(null)}
+          className="text-[11px] text-[#98A2B3] hover:text-[#475467]"
+        >
+          {tt('隐藏')}
         </button>
       </span>
     );
@@ -59,9 +67,9 @@ export function RevealPhone({
         onClick={reveal}
         disabled={busy}
         className="shrink-0 text-[11px] text-brand hover:underline disabled:text-[#98A2B3]"
-        title="查看完整号码（会记录审计日志）"
+        title={tt('查看完整号码（会记录审计日志）')}
       >
-        {busy ? '…' : '查看完整'}
+        {busy ? '…' : tt('查看完整')}
       </button>
       {error ? <span className="text-[11px] text-red-500">{error}</span> : null}
     </span>
