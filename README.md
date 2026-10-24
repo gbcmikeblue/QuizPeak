@@ -84,6 +84,24 @@ npm run dev:h5                  # http://localhost:3002  （H5，uni-app）
 | 新人礼 | +100 | 1 次 |
 | 邀请好友 | +100（被邀请人通过首个关卡后） | 每邀请 1 人 1 次 |
 
+## 开发期缓存与删除（重要）
+
+构建缓存（`.next`、`node_modules/.vite`、`web-h5/dist`）每次启动 dev 都会被清理重建。若你的编辑器/终端给 node 进程注入了 `NODE_OPTIONS=--require ...node-language-shim.cjs`（部分 AI IDE 会这么做），会出现两个坑：
+
+- 删除被重定向到**回收站**，几万个缓存文件堆进去，磁盘根本没释放；
+- 触发 shim 的「单轮删除 500 文件」守卫，`next dev` 直接抛 `SAFE_DELETE_BULK_CONFIRM_REQUIRED` 退出（表现为 **web 端起不来**）。
+
+本项目已在脚本层统一处理，无需手工设环境变量：
+
+| 场景 | 处理方式 |
+| --- | --- |
+| `npm run dev:all` | `scripts/dev-all.mjs` 用 `devEnv()` 启动子进程，自动剥离 shim |
+| `npm run dev:web` / `dev:admin` / `dev:h5` / `dev:server` | 走 `scripts/run-service.mjs`，同样剥离，并在控制台提示 |
+| `npm run clean` | 检测到被注入时用干净环境重跑自己，缓存直接删除不进回收站 |
+| 手工 `next dev` | 若遇到上面的报错，在当前 shell 先设 `CODEBUDDY_SAFE_DELETE_ENABLED=0`（PowerShell: `$env:CODEBUDDY_SAFE_DELETE_ENABLED='0'`） |
+
+另外：**不要**手动去删 `.next` / `.vite`，需要时用 `npm run clean`（先停服务，否则 Windows 会因文件占用跳过）；`npm run clean -- --all` 会连 node_modules 下的缓存一起清。
+
 ## 日常开发（推荐，改代码不用构建）
 
 ```bash
@@ -128,9 +146,9 @@ npx pm2 restart api                  # 改了后端并 build 后重启
 
 | 端 | 已翻译 | 待翻译 |
 | --- | --- | --- |
-| PC | 顶栏 / 页脚 / 首页 / 题库列表 / 题库卡片 / 竞赛列表 / 竞赛卡片 / 通知 / 小游戏 | 题库详情、答题页、成绩页、竞赛详情、搜索、工单、文章、静态页、我的、积分、排行榜 |
-| Admin | 侧边栏 + 二级菜单 / 顶栏 / 无权限页 | 登录页、各业务页正文（题库、竞赛、任务、用户、工单等） |
-| H5 | 首页 / 我的 / 登录 / 题库列表 / 排行榜 / 积分 + tabBar + 导航标题 | 题库详情、答题页 |
+| PC | 顶栏 / 页脚 / 首页 / 题库列表 / 题库卡片 / 竞赛列表 / 竞赛卡片 / 排行榜 / 通知 / 小游戏 | 题库详情、答题页、成绩页、竞赛详情、搜索、工单、文章、静态页、我的、积分 |
+| Admin | 登录页 / 侧边栏 + 二级菜单 / 顶栏 / 无权限页 | 各业务页正文（题库、竞赛、任务、用户、工单、短信、审计等） |
+| H5 | 全部 8 个页面（首页/我的/登录/题库列表/题库详情/答题/排行榜/积分）+ tabBar + 导航标题 | — （题库详情描述、题干、选项等为数据库内容，不做翻译） |
 
 ## 常用命令
 
