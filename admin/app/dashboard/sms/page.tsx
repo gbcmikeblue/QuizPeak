@@ -9,6 +9,8 @@ interface SmsRow {
   id: string;
   phone: string;
   scene: string;
+  client: string;
+  clientLabel: string;
   code: string;
   used: boolean;
   expired: boolean;
@@ -33,10 +35,20 @@ const SCENES = [
   { value: 'BIND_PHONE', label: '绑定手机' },
 ];
 
+/** 端：各端验证码频控互相独立 */
+const CLIENTS = [
+  { value: '', label: '全部端' },
+  { value: 'PC', label: 'PC 网页' },
+  { value: 'H5', label: 'H5' },
+  { value: 'MP', label: '小程序' },
+  { value: 'APP', label: 'App' },
+];
+
 export default function SmsPage() {
   const [data, setData] = useState<SmsList | null>(null);
   const [phone, setPhone] = useState('');
   const [scene, setScene] = useState('');
+  const [client, setClient] = useState('');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -49,13 +61,14 @@ export default function SmsPage() {
       const query = new URLSearchParams({ page: String(page), pageSize: '20' });
       if (phone) query.set('phone', phone);
       if (scene) query.set('scene', scene);
+      if (client) query.set('client', client);
       setData(await apiFetch<SmsList>(`/admin/sms?${query.toString()}`));
     } catch (e) {
       setError(e instanceof Error ? e.message : '加载失败');
     } finally {
       setLoading(false);
     }
-  }, [page, phone, scene]);
+  }, [page, phone, scene, client]);
 
   useEffect(() => {
     void load();
@@ -117,6 +130,23 @@ export default function SmsPage() {
             ))}
           </select>
         </div>
+        <div>
+          <label className="label">端</label>
+          <select
+            className="input w-[130px]"
+            value={client}
+            onChange={(e) => {
+              setClient(e.target.value);
+              setPage(1);
+            }}
+          >
+            {CLIENTS.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </div>
         <button type="button" className="btn-ghost h-10" onClick={() => void load()} disabled={loading}>
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
           刷新
@@ -137,6 +167,7 @@ export default function SmsPage() {
               <th>发送时间</th>
               <th>手机号</th>
               <th>场景</th>
+              <th>端</th>
               <th>验证码</th>
               <th>有效期</th>
               <th>状态</th>
@@ -153,6 +184,11 @@ export default function SmsPage() {
                     <RevealPhone source="SMS" id={row.id} masked={row.phone} />
                   </td>
                   <td className="text-xs">{row.scene}</td>
+                  <td className="text-xs">
+                    <span className="rounded bg-brand-soft px-2 py-0.5 text-[11px] text-brand-deep">
+                      {row.clientLabel ?? row.client}
+                    </span>
+                  </td>
                   <td>
                     <button
                       type="button"
@@ -181,7 +217,7 @@ export default function SmsPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="py-12 text-center text-sm text-[#98A2B3]">
+                <td colSpan={7} className="py-12 text-center text-sm text-[#98A2B3]">
                   {loading ? '加载中…' : '还没有短信记录，去用户端点一次「获取验证码」'}
                 </td>
               </tr>

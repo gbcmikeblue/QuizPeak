@@ -21,6 +21,8 @@ export interface JwtPayload {
   sub: string;
   scope: 'user' | 'admin';
   roles?: string[];
+  /** 登录端（PC / H5 / MP / APP），多端同时在线时用于区分令牌来源 */
+  client?: string;
 }
 
 export interface AuthTokens {

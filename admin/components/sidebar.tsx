@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { BRAND } from '@quizpeak/shared';
+import { useI18n } from '@/lib/i18n';
 import { getAdminProfile } from '@/lib/api';
 
 interface NavChild {
@@ -66,6 +67,7 @@ const NAV: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { tt } = useI18n();
   const [open, setOpen] = useState<string[]>([]);
   const [permissions, setPermissions] = useState<string[] | null>(null);
   const [roleLabel, setRoleLabel] = useState('');
@@ -128,7 +130,7 @@ export function Sidebar() {
                   aria-expanded={expanded}
                 >
                   <Icon size={16} />
-                  <span className="flex-1 text-left">{item.label}</span>
+                  <span className="flex-1 text-left">{tt(item.label)}</span>
                   <ChevronDown size={14} className={clsx('transition-transform', expanded ? 'rotate-180' : '')} />
                 </button>
 
@@ -145,7 +147,7 @@ export function Sidebar() {
                             active ? 'bg-brand text-white' : 'text-[#667085] hover:bg-black/[0.04] hover:text-[#101828]',
                           )}
                         >
-                          {child.label}
+                          {tt(child.label)}
                         </Link>
                       );
                     })}
@@ -166,16 +168,16 @@ export function Sidebar() {
               )}
             >
               <Icon size={16} />
-              {item.label}
+              {tt(item.label)}
             </Link>
           );
         })}
       </nav>
 
       <div className="mt-4 rounded-lg bg-brand-soft p-3 text-xs leading-5 text-[#4A6B5C]">
-        <p className="font-medium text-[#0B3B27]">当前角色</p>
-        <p className="mt-1">{roleLabel || '加载中…'}</p>
-        <p className="mt-1 text-[11px]">只能看到有权限的菜单，接口侧同样校验</p>
+        <p className="font-medium text-[#0B3B27]">{tt('当前角色')}</p>
+        <p className="mt-1">{roleLabel || tt('加载中…')}</p>
+        <p className="mt-1 text-[11px]">{tt('只能看到有权限的菜单，接口侧同样校验')}</p>
       </div>
     </aside>
   );

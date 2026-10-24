@@ -66,7 +66,20 @@ export class AdminTicketsController {
   }
 
   @Patch(':id/status')
-  status(@Param('id') id: string, @Body(new ZodValidationPipe(z.object({ status: z.nativeEnum(TicketStatus) }))) body: { status: TicketStatus }) {
-    return this.tickets.setStatus(id, body.status);
+  status(
+    @Param('id') id: string,
+    @CurrentAdmin() admin: AdminUser,
+    @Body(
+      new ZodValidationPipe(
+        z.object({
+          status: z.nativeEnum(TicketStatus),
+          /** 变更说明：关闭工单必填，会作为客服回复写入并通知用户 */
+          note: z.string().trim().max(500).optional(),
+        }),
+      ),
+    )
+    body: { status: TicketStatus; note?: string },
+  ) {
+    return this.tickets.setStatus(id, body.status, body.note, admin.id);
   }
 }

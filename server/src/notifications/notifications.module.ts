@@ -1,4 +1,4 @@
-import { Controller, Get, Global, Injectable, Module, Param, Post, Query } from '@nestjs/common';
+import { Controller, Delete, Get, Global, Injectable, Module, Param, Post, Query } from '@nestjs/common';
 import type { User } from '@prisma/client';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { PrismaService } from '../prisma/prisma.service';
@@ -34,6 +34,18 @@ export class NotificationsService {
     return { ok: true };
   }
 
+  /** 一键清理：删除该用户全部通知（含未读） */
+  async clearAll(userId: string) {
+    const res = await this.prisma.notification.deleteMany({ where: { userId } });
+    return { ok: true, deleted: res.count };
+  }
+
+  /** 删除单条通知 */
+  async remove(userId: string, id: string) {
+    const res = await this.prisma.notification.deleteMany({ where: { id, userId } });
+    return { ok: res.count > 0, deleted: res.count };
+  }
+
   async read(userId: string, id: string) {
     await this.prisma.notification.updateMany({ where: { id, userId }, data: { isRead: true } });
     return { ok: true };
@@ -57,6 +69,18 @@ export class NotificationsController {
   @Post(':id/read')
   read(@CurrentUser() user: User, @Param('id') id: string) {
     return this.notifications.read(user.id, id);
+  }
+
+  /** 一键清理全部通知 */
+  @Delete()
+  clearAll(@CurrentUser() user: User) {
+    return this.notifications.clearAll(user.id);
+  }
+
+  /** 删除单条通知 */
+  @Delete(':id')
+  remove(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.notifications.remove(user.id, id);
   }
 }
 

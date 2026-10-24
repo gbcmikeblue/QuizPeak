@@ -164,11 +164,14 @@ model SmsCode {
   phone     String
   code      String
   scene     String
+  /// 登录端（PC / H5 / MP / APP）：频控按端互斥，一端发送不影响另一端
+  client    String   @default("PC")
   expiresAt DateTime
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  @@index([phone, scene, createdAt])
+  @@index([phone, scene, client, createdAt])
+  @@index([phone, createdAt])
 }
 
 // ============ 分类与题库 ============

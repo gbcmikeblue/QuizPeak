@@ -7,6 +7,7 @@ const TARGETS = [
   { name: 'api', url: 'http://localhost:8080/api/health' },
   { name: 'web', url: 'http://localhost:3000/' },
   { name: 'admin', url: 'http://localhost:3001/login' },
+  { name: 'h5', url: 'http://localhost:3002/' },
 ];
 
 async function checkPort(port) {

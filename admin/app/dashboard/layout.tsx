@@ -5,12 +5,15 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Loader2, Lock, LogOut, RefreshCw } from 'lucide-react';
 import { Sidebar } from '@/components/sidebar';
+import { LanguageSwitch } from '@/components/language-switch';
+import { useI18n } from '@/lib/i18n';
 import { clearToken, getAdminProfile, getToken } from '@/lib/api';
 import { PERMISSION_LABELS, requiredPermission } from '@/lib/permissions';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { tt } = useI18n();
   const [ready, setReady] = useState(false);
   const [admin, setAdmin] = useState<{ name?: string; role?: string; roleLabel?: string; permissions?: string[] } | null>(
     null,
@@ -42,10 +45,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-14 items-center justify-between border-b border-black/5 bg-white px-6">
-          <div className="text-sm text-[#667085]">知巅 运营后台</div>
+          <div className="text-sm text-[#667085]">{tt('知巅 运营后台')}</div>
           <div className="flex items-center gap-3">
+            <LanguageSwitch />
             <span className="text-sm text-[#344054]">
-              {admin?.name ?? '管理员'}
+              {admin?.name ?? tt('管理员')}
               <span className="ml-2 rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand">
                 {admin?.role ?? 'OPERATOR'}
               </span>
@@ -59,7 +63,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               }}
             >
               <LogOut size={14} />
-              退出
+              {tt('退出')}
             </button>
           </div>
         </header>
@@ -71,14 +75,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-[#F2F4F7] text-[#667085]">
                 <Lock size={20} />
               </div>
-              <h2 className="mt-4 text-lg font-semibold">当前角色无权访问</h2>
+              <h2 className="mt-4 text-lg font-semibold">{tt('当前角色无权访问')}</h2>
               <p className="mt-2 text-sm leading-6 text-[#667085]">
-                你当前是「{admin?.roleLabel ?? admin?.role ?? '未知角色'}」，访问该页面需要「
-                {need ? PERMISSION_LABELS[need] ?? need : '对应'}」权限。
+                {admin?.roleLabel ?? admin?.role ?? '—'} ·{' '}
+                {tt('需要权限：{perm}', { perm: need ? PERMISSION_LABELS[need] ?? need : '—' })}
               </p>
               <div className="mt-5 flex justify-center gap-2">
                 <Link href="/dashboard" className="btn-primary h-10 px-4 text-[13px]">
-                  返回仪表盘
+                  {tt('返回仪表盘')}
                 </Link>
                 <button
                   type="button"
@@ -88,7 +92,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     router.replace('/login');
                   }}
                 >
-                  <LogOut size={14} /> 换个账号
+                  <LogOut size={14} /> {tt('换个账号')}
                 </button>
               </div>
               <p className="mt-4 text-[11px] text-[#98A2B3]">如需该权限，请联系超级管理员在「管理员账号」里调整角色</p>

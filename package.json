@@ -7,15 +7,19 @@
     "packages/*",
     "server",
     "admin",
-    "web-pc"
+    "web-pc",
+    "web-h5"
   ],
   "scripts": {
-    "build:shared": "npm run build -w @quizpeak/shared",
+    "build:shared": "npm run build -w @quizpeak/shared && npm run build -w @quizpeak/i18n",
+    "build:i18n": "npm run build -w @quizpeak/i18n",
     "build:server": "npm run build -w @quizpeak/server",
     "build:admin": "npm run build -w @quizpeak/admin",
+    "build:h5": "npm run build -w @quizpeak/web-h5",
     "dev:server": "npm run start:dev -w @quizpeak/server",
     "dev:admin": "npm run dev -w @quizpeak/admin",
     "dev:web": "npm run dev -w @quizpeak/web-pc",
+    "dev:h5": "npm run dev -w @quizpeak/web-h5",
     "dev:all": "node scripts/dev-all.mjs",
     "verify": "node scripts/verify.mjs",
     "clean": "node scripts/clean.mjs",
@@ -23,7 +27,7 @@
     "db:generate": "npm run prisma:generate -w @quizpeak/server",
     "db:migrate": "npm run prisma:migrate -w @quizpeak/server",
     "db:seed": "npm run prisma:seed -w @quizpeak/server",
-    "typecheck": "npm run typecheck -w @quizpeak/shared && npm run typecheck -w @quizpeak/server && npm run typecheck -w @quizpeak/admin"
+    "typecheck": "npm run typecheck -w @quizpeak/shared && npm run typecheck -w @quizpeak/i18n && npm run typecheck -w @quizpeak/server && npm run typecheck -w @quizpeak/admin"
   },
   "devDependencies": {
     "embedded-postgres": "^18.4.0-beta.17",
@@ -31,5 +35,8 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "volta": {
+    "node": "22.23.4"
   }
 }

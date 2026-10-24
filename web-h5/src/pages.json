@@ -1,0 +1,73 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "知巅 QuizPeak",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/quizzes/index",
+      "style": {
+        "navigationBarTitleText": "题库"
+      }
+    },
+    {
+      "path": "pages/quiz/detail",
+      "style": {
+        "navigationBarTitleText": "题库详情"
+      }
+    },
+    {
+      "path": "pages/quiz/play",
+      "style": {
+        "navigationBarTitleText": "答题",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/leaderboard/index",
+      "style": {
+        "navigationBarTitleText": "排行榜"
+      }
+    },
+    {
+      "path": "pages/points/index",
+      "style": {
+        "navigationBarTitleText": "积分中心"
+      }
+    },
+    {
+      "path": "pages/me/index",
+      "style": {
+        "navigationBarTitleText": "我的"
+      }
+    },
+    {
+      "path": "pages/login/index",
+      "style": {
+        "navigationBarTitleText": "登录"
+      }
+    }
+  ],
+  "tabBar": {
+    "color": "#98A2B3",
+    "selectedColor": "#0E8A52",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "fontSize": "11px",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "首页" },
+      { "pagePath": "pages/quizzes/index", "text": "题库" },
+      { "pagePath": "pages/leaderboard/index", "text": "榜单" },
+      { "pagePath": "pages/me/index", "text": "我的" }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "知巅 QuizPeak",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "backgroundColor": "#F5F6F8"
+  }
+}

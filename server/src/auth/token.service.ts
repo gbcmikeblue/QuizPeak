@@ -9,8 +9,13 @@ export class TokenService {
 
   constructor(private readonly jwt: JwtService) {}
 
-  async issue(userId: string, scope: 'user' | 'admin' = 'user', roles?: string[]): Promise<AuthTokens> {
-    const base = { sub: userId, scope, roles };
+  async issue(
+    userId: string,
+    scope: 'user' | 'admin' = 'user',
+    roles?: string[],
+    client?: string,
+  ): Promise<AuthTokens> {
+    const base = { sub: userId, scope, roles, client };
     const [accessToken, refreshToken] = await Promise.all([
       this.jwt.signAsync({ ...base, typ: 'access' } as JwtPayload, {
         expiresIn: this.accessExpires,

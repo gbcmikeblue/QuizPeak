@@ -1,0 +1,189 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
+import { authFetch, getToken } from '@/lib/auth';
+
+interface HexState {
+  letters: string[];
+  durationSec: number;
+  minLength: number;
+  rewardThreshold: number;
+  played: boolean;
+  words: Array<{ word: string; score: number }>;
+  score: number;
+  reward: number;
+}
+
+export default function HexlingPage() {
+  const router = useRouter();
+  const [state, setState] = useState<HexState | null>(null);
+  const [word, setWord] = useState('');
+  const [pending, setPending] = useState<string[]>([]);
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      setState(await authFetch<HexState>('/games/hexling'));
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : '加载失败');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!getToken()) {
+      router.replace('/login?redirect=%2Fgames%2Fhexling');
+      return;
+    }
+    void load();
+  }, [load, router]);
+
+  function addWord() {
+    const w = word.trim().toLowerCase();
+    if (w.length < 4) {
+      setMessage('单词至少 4 个字母');
+      return;
+    }
+    if (pending.includes(w)) {
+      setMessage('这个单词已经加过了');
+      return;
+    }
+    setPending([...pending, w]);
+    setWord('');
+    setMessage('');
+  }
+
+  async function submit() {
+    if (!state || busy) return;
+    setBusy(true);
+    setMessage('');
+    try {
+      const res = await authFetch<{
+        score: number;
+        reward: number;
+        accepted: unknown[];
+        rejected: Array<{ word: string; reason: string }>;
+      }>('/games/hexling/submit', { method: 'POST', body: JSON.stringify({ words: pending }) });
+      setMessage(
+        `提交完成：得分 ${res.score}` +
+          (res.reward > 0 ? `，获得 ${res.reward} 积分` : '') +
+          (res.rejected.length ? `；${res.rejected.length} 个未通过` : ''),
+      );
+      setPending([]);
+      await load();
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : '提交失败');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="card mx-auto mt-5 max-w-[560px]">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium">Hexling</span>
+        <span className="text-xs text-[#98A2B3]">
+          16 字母 · 每日一局
+          {state ? ` · 建议 ${Math.round(state.durationSec / 60)} 分钟内完成` : ''}
+        </span>
+      </div>
+
+      {!state ? (
+        <p className="py-8 text-center text-sm text-[#667085]">加载中…</p>
+      ) : (
+        <>
+          <div className="mt-3 flex flex-wrap justify-center gap-2">
+            {state.letters.map((ch: string, i: number) => (
+              <span
+                key={`${ch}-${i}`}
+                className="grid h-10 w-10 place-items-center rounded-lg bg-brand-soft text-base font-bold uppercase text-[#0B3B27]"
+              >
+                {ch}
+              </span>
+            ))}
+          </div>
+
+          {state.played ? (
+            <>
+              <p className="mt-4 rounded-lg bg-brand-soft px-3 py-2 text-center text-sm text-[#0B3B27]">
+                今日已提交：得分 {state.score}，拼出 {state.words.length} 个单词
+                {state.reward > 0 ? `，获得 ${state.reward} 积分` : ''}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {state.words.map((w) => (
+                  <span
+                    key={w.word}
+                    className="rounded-md bg-[#F2F4F7] px-2 py-1 text-[12px] text-[#475467]"
+                  >
+                    {w.word} <span className="text-[#98A2B3]">+{w.score}</span>
+                  </span>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="mt-4 flex gap-2">
+                <input
+                  className="input flex-1 uppercase tracking-widest"
+                  placeholder="输入 4 个字母以上的单词"
+                  maxLength={20}
+                  value={word}
+                  onChange={(e) => setWord(e.target.value.toLowerCase().replace(/[^a-z]/g, ''))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') addWord();
+                  }}
+                />
+                <button type="button" className="btn-ghost h-10 px-4 text-[13px]" onClick={addWord}>
+                  加入
+                </button>
+              </div>
+
+              {pending.length > 0 ? (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {pending.map((w) => (
+                    <button
+                      key={w}
+                      type="button"
+                      onClick={() => setPending(pending.filter((x) => x !== w))}
+                      className="rounded-md bg-[#F2F4F7] px-2 py-1 text-[12px] text-[#475467]"
+                      title="点击移除"
+                    >
+                      {w} ✕
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+
+              <button
+                type="button"
+                className="btn-primary mt-4 h-10 w-full text-[13px]"
+                onClick={submit}
+                disabled={busy || pending.length === 0}
+              >
+                {busy ? <Loader2 size={14} className="animate-spin" /> : null}
+                提交本局（{pending.length} 个）
+              </button>
+            </>
+          )}
+
+          {message ? <p className="mt-3 text-center text-xs text-[#667085]">{message}</p> : null}
+
+          <div className="mt-4 rounded-lg bg-[#FAFBFA] p-3 text-[11px] leading-5 text-[#667085]">
+            <p className="mb-1 text-[12px] font-medium text-[#344054]">玩法说明</p>
+            <p>· 用今日 16 个字母拼单词，每个字母最多用一次（如盘里只有一个 t，就不能拼 test）。</p>
+            <p>· 单词至少 {state.minLength} 个字母，且必须是词典中的英文单词；同一单词只计一次。</p>
+            <p>
+              · 可连续加入多个单词，全部加完后<b>一次性提交</b>，提交后当天不可再玩。
+            </p>
+            <p>
+              · 计分：4 字母 +1、5 字母 +2、6 字母 +3、7 字母 +5、8 字母以上 +8； 总分满{' '}
+              {state.rewardThreshold} 发放积分奖励。
+            </p>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}

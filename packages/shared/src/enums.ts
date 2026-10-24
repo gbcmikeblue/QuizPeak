@@ -101,6 +101,24 @@ export enum AdminRoleCode {
   EDITOR = 'EDITOR',
 }
 
+/**
+ * 登录端标识：多端可同时在线，短信验证码的频控与记录按端隔离
+ * （PC 网页 / H5 / 小程序 / App）
+ */
+export enum ClientCode {
+  PC = 'PC',
+  H5 = 'H5',
+  MP = 'MP',
+  APP = 'APP',
+}
+
+export const CLIENT_LABELS: Record<ClientCode, string> = {
+  [ClientCode.PC]: 'PC 网页',
+  [ClientCode.H5]: 'H5',
+  [ClientCode.MP]: '小程序',
+  [ClientCode.APP]: 'App',
+};
+
 /** 业务规则默认值（正式值存 site_config，后台可改） */
 export const DEFAULT_RULES = {
   /** 单题答题时长（秒） */

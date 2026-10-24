@@ -29,7 +29,7 @@ export class AuthController {
   @Post('sms-code')
   @HttpCode(200)
   sendSmsCode(@Body(new ZodValidationPipe(sendSmsCodeSchema)) body: SendSmsCodeInput) {
-    return this.sms.send(body.phone, body.scene);
+    return this.sms.send(body.phone, body.scene, body.client);
   }
 
   @Public()

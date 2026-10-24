@@ -14,6 +14,7 @@ const TASKS = [
   { name: 'api', color: '\x1b[36m', cmd: 'npm', args: ['run', 'start:dev', '-w', '@quizpeak/server'] },
   { name: 'web', color: '\x1b[32m', cmd: 'npm', args: ['run', 'dev', '-w', '@quizpeak/web-pc'] },
   { name: 'admin', color: '\x1b[35m', cmd: 'npm', args: ['run', 'dev', '-w', '@quizpeak/admin'] },
+  { name: 'h5', color: '\x1b[33m', cmd: 'npm', args: ['run', 'dev', '-w', '@quizpeak/web-h5'] },
 ].filter((t) => !skip(t.name));
 
 const RESET = '\x1b[0m';

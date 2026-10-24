@@ -54,6 +54,8 @@ function LoginInner() {
       const res = await post<{ ttl: number; devCode?: string }>('/auth/sms-code', {
         phone,
         scene: 'LOGIN',
+        // 端标识：各端验证码频控互相独立，多端可同时在线
+        client: 'PC',
       });
       setSeconds(60);
       if (res.devCode) {
@@ -76,8 +78,16 @@ function LoginInner() {
     try {
       const data =
         mode === 'sms'
-          ? await post<{ tokens: { accessToken: string } }>('/auth/login/sms', { phone, code })
-          : await post<{ tokens: { accessToken: string } }>('/auth/login/password', { account, password });
+          ? await post<{ tokens: { accessToken: string } }>('/auth/login/sms', {
+              phone,
+              code,
+              client: 'PC',
+            })
+          : await post<{ tokens: { accessToken: string } }>('/auth/login/password', {
+              account,
+              password,
+              client: 'PC',
+            });
       setToken(data.tokens.accessToken);
       router.replace(redirect);
       router.refresh();

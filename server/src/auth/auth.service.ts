@@ -10,6 +10,7 @@ import { randomBytes } from 'node:crypto';
 import {
   DEFAULT_RULES,
   type AuthTokens,
+  type ClientCode,
   type PasswordLoginInput,
   type RegisterInput,
   type ResetPasswordInput,
@@ -50,7 +51,7 @@ export class AuthService {
   ) {}
 
   async smsLogin(input: SmsLoginInput): Promise<AuthResult> {
-    await this.sms.verify(input.phone, 'LOGIN', input.code);
+    await this.sms.verify(input.phone, 'LOGIN', input.code, input.client);
 
     let user = await this.prisma.user.findUnique({ where: { phone: input.phone } });
     if (!user) {
@@ -61,7 +62,7 @@ export class AuthService {
     }
     if (user.status === UserStatus.BANNED) throw new UnauthorizedException('账号已被限制');
 
-    return this.finishLogin(user);
+    return this.finishLogin(user, input.client);
   }
 
   async passwordLogin(input: PasswordLoginInput): Promise<AuthResult> {
@@ -76,11 +77,11 @@ export class AuthService {
     if (!matched) throw new UnauthorizedException('账号或密码错误');
     if (user.status === UserStatus.BANNED) throw new UnauthorizedException('账号已被限制');
 
-    return this.finishLogin(user);
+    return this.finishLogin(user, input.client);
   }
 
   async register(input: RegisterInput): Promise<AuthResult> {
-    await this.sms.verify(input.phone, 'REGISTER', input.code);
+    await this.sms.verify(input.phone, 'REGISTER', input.code, input.client);
 
     const exists = await this.prisma.user.findUnique({ where: { phone: input.phone } });
     if (exists) throw new ConflictException('该手机号已注册');
@@ -97,11 +98,11 @@ export class AuthService {
       data: { used: true },
     });
 
-    return this.finishLogin(user);
+    return this.finishLogin(user, input.client);
   }
 
   async resetPassword(input: ResetPasswordInput): Promise<{ success: true }> {
-    await this.sms.verify(input.phone, 'RESET_PASSWORD', input.code);
+    await this.sms.verify(input.phone, 'RESET_PASSWORD', input.code, input.client);
     const user = await this.prisma.user.findUnique({ where: { phone: input.phone } });
     if (!user) throw new BadRequestException('手机号未注册');
 
@@ -120,7 +121,8 @@ export class AuthService {
     if (!user || user.status === UserStatus.BANNED) {
       throw new UnauthorizedException('账号不可用');
     }
-    return this.token.issue(user.id, 'user');
+    // 刷新时保留原端标识，多端令牌互不影响
+    return this.token.issue(user.id, 'user', undefined, payload.client);
   }
 
   /** M1 采用前端丢弃 token；如需服务端强制下线，后续接入 Redis 黑名单 */
@@ -171,12 +173,13 @@ export class AuthService {
     return (await this.prisma.user.findUnique({ where: { id: user.id } })) ?? user;
   }
 
-  private async finishLogin(user: User): Promise<AuthResult> {
+  private async finishLogin(user: User, client?: ClientCode): Promise<AuthResult> {
     await this.prisma.user.update({
       where: { id: user.id },
       data: { lastLoginAt: new Date() },
     });
-    const tokens = await this.token.issue(user.id, 'user');
+    // 每次登录独立签发令牌，不清理其它端的令牌 → 多端可同时在线
+    const tokens = await this.token.issue(user.id, 'user', undefined, client);
     return { user: this.toPublicUser(user), tokens };
   }
 

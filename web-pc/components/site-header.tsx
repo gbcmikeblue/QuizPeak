@@ -6,6 +6,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Bell, Search, Star, UserRound } from 'lucide-react';
 import { BRAND } from '@quizpeak/shared';
 import { authFetch, clearToken, fetchMe, getToken, type Me } from '@/lib/auth';
+import { useI18n } from '@/lib/i18n';
+import { LanguageSwitch } from '@/components/language-switch';
 
 const NAV = [
   { href: '/quizzes', label: '答题' },
@@ -17,6 +19,7 @@ const NAV = [
 
 export function SiteHeader() {
   const router = useRouter();
+  const { tt } = useI18n();
   const [me, setMe] = useState<Me | null>(null);
   const [ready, setReady] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -47,6 +50,18 @@ export function SiteHeader() {
     };
   }, [pathname]);
 
+  // 通知页「标记已读 / 一键清理」后即时刷新铃铛未读数
+  useEffect(() => {
+    const refresh = () => {
+      if (!getToken()) return;
+      authFetch<{ unread: number }>('/notifications?page=1')
+        .then((res) => setUnread(res.unread))
+        .catch(() => undefined);
+    };
+    window.addEventListener('notifications:refresh', refresh);
+    return () => window.removeEventListener('notifications:refresh', refresh);
+  }, []);
+
   return (
     <header className="sticky top-0 z-20 border-b border-black/5 bg-white/90 backdrop-blur">
       <div className="container-page flex h-16 items-center justify-between">
@@ -73,24 +88,25 @@ export function SiteHeader() {
                     : 'text-[#344054] hover:bg-white'
                 }`}
               >
-                {item.label}
+                {tt(item.label)}
               </Link>
             );
           })}
         </nav>
 
         <div className="flex items-center gap-2.5">
+          <LanguageSwitch />
           <Link
             href="/search"
             className="hidden h-9 w-9 place-items-center rounded-full border border-black/5 text-[#475467] transition hover:border-brand/40 hover:text-brand sm:grid"
-            title="搜索题库 / 竞赛 / 文章"
+            title={tt('搜索题库 / 竞赛 / 文章')}
           >
             <Search size={16} />
           </Link>
           <Link
             href="/notifications"
             className="relative hidden h-9 w-9 place-items-center rounded-full border border-black/5 text-[#475467] sm:grid"
-            title={unread > 0 ? `${unread} 条未读通知` : '通知'}
+            title={unread > 0 ? tt('未读 {n} 条', { n: unread }) : tt('通知')}
           >
             <Bell size={16} />
             {unread > 0 ? (
@@ -105,10 +121,10 @@ export function SiteHeader() {
               <Link
                 href="/points"
                 className="flex h-9 items-center gap-1.5 rounded-full bg-brand-soft px-3 text-sm font-medium text-[#0B3B27] transition hover:bg-brand/15"
-                title="赚积分"
+                title={tt('积分')}
               >
                 <Star size={15} className="text-[#F5A623]" />
-                {me.points} <span className="text-xs font-normal text-[#4A6B5C]">积分</span>
+                {me.points} <span className="text-xs font-normal text-[#4A6B5C]">{tt('积分')}</span>
               </Link>
               <div className="relative">
                 <button
@@ -122,13 +138,13 @@ export function SiteHeader() {
                 {menuOpen ? (
                   <div className="absolute right-0 top-11 w-[160px] overflow-hidden rounded-lg border border-black/5 bg-white py-1 text-sm shadow-lg">
                     <Link href="/me" className="block px-3 py-2 hover:bg-black/[0.03]" onClick={() => setMenuOpen(false)}>
-                      个人中心
+                      {tt('个人中心')}
                     </Link>
                     <Link href="/me?tab=settings" className="block px-3 py-2 hover:bg-black/[0.03]" onClick={() => setMenuOpen(false)}>
-                      设置
+                      {tt('设置')}
                     </Link>
                     <Link href="/points" className="block px-3 py-2 hover:bg-black/[0.03]" onClick={() => setMenuOpen(false)}>
-                      赚积分
+                      {tt('积分')}
                     </Link>
                     <button
                       type="button"
@@ -141,7 +157,7 @@ export function SiteHeader() {
                       }}
                       className="block w-full px-3 py-2 text-left text-red-600 hover:bg-red-50"
                     >
-                      退出登录
+                      {tt('退出登录')}
                     </button>
                   </div>
                 ) : null}
@@ -149,7 +165,7 @@ export function SiteHeader() {
             </>
           ) : ready ? (
             <Link href="/login" className="btn-primary h-9 px-4 text-[13px]">
-              登录
+              {tt('登录')}
             </Link>
           ) : (
             <span className="h-9 w-16 animate-pulse rounded-full bg-black/5" />

@@ -14,9 +14,16 @@ export class AdminSmsController {
   list(
     @Query('phone') phone?: string,
     @Query('scene') scene?: string,
+    @Query('client') client?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
-    return this.sms.list({ phone, scene, page: Number(page ?? 1), pageSize: Number(pageSize ?? 20) });
+    return this.sms.list({
+      phone,
+      scene,
+      client,
+      page: Number(page ?? 1),
+      pageSize: Number(pageSize ?? 20),
+    });
   }
 }

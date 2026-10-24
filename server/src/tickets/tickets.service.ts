@@ -106,19 +106,34 @@ export class TicketsService {
     const page = Math.max(Number(params.page ?? 1), 1);
     const pageSize = Math.min(Math.max(Number(params.pageSize ?? 10), 1), 50);
     const where = params.status ? { status: params.status as TicketStatus } : {};
-    const [list, total] = await this.prisma.$transaction([
-      this.prisma.ticket.findMany({
-        where,
-        orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-        include: {
-          user: { select: { nickname: true, username: true, phone: true } },
-          _count: { select: { replies: true } },
-        },
-      }),
-      this.prisma.ticket.count({ where }),
-    ]);
+
+    const [list, total, openCount, inProgressCount, closedCount, allTotal] =
+      await this.prisma.$transaction([
+        this.prisma.ticket.findMany({
+          where,
+          orderBy: [{ createdAt: 'desc' }],
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+          include: {
+            user: { select: { nickname: true, username: true, phone: true } },
+            _count: { select: { replies: true } },
+          },
+        }),
+        this.prisma.ticket.count({ where }),
+        this.prisma.ticket.count({ where: { status: TicketStatus.OPEN } }),
+        this.prisma.ticket.count({ where: { status: TicketStatus.IN_PROGRESS } }),
+        this.prisma.ticket.count({ where: { status: TicketStatus.CLOSED } }),
+        this.prisma.ticket.count(),
+      ]);
+
+    // 各状态数量：筛选标签直接显示，避免「切了筛选看不到东西」的错觉
+    const statusCounts = {
+      ALL: allTotal,
+      OPEN: openCount,
+      IN_PROGRESS: inProgressCount,
+      CLOSED: closedCount,
+    };
+
     return {
       list: list.map((t) => ({
         id: t.id,
@@ -130,17 +145,63 @@ export class TicketsService {
         phone: t.user.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2'),
         replies: t._count.replies,
         createdAt: t.createdAt,
+        updatedAt: t.updatedAt,
       })),
       total,
       page,
       pageSize,
+      statusCounts,
     };
   }
 
-  async setStatus(id: string, status: TicketStatus) {
+  /**
+   * 变更工单状态
+   * - 关闭工单必须填写处理说明（写库为一条客服回复并推送通知，便于事后追溯）
+   * - 其它状态说明可选填
+   */
+  async setStatus(id: string, status: TicketStatus, note?: string, adminId?: string) {
     const ticket = await this.prisma.ticket.findUnique({ where: { id } });
     if (!ticket) throw new NotFoundException('工单不存在');
-    await this.prisma.ticket.update({ where: { id }, data: { status } });
-    return { id, status };
+
+    const trimmed = note?.trim() ?? '';
+    if (ticket.status === status && !trimmed) {
+      throw new BadRequestException('工单已是该状态');
+    }
+    if (status === TicketStatus.CLOSED && trimmed.length < 2) {
+      throw new BadRequestException('关闭工单需填写处理说明（至少 2 个字）');
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.ticket.update({ where: { id }, data: { status } }),
+      ...(trimmed
+        ? [
+            this.prisma.ticketReply.create({
+              data: {
+                ticketId: id,
+                authorType: 'ADMIN',
+                authorId: adminId ?? 'system:status',
+                content: trimmed,
+              },
+            }),
+          ]
+        : []),
+    ]);
+
+    const label =
+      status === TicketStatus.CLOSED
+        ? '已关闭'
+        : status === TicketStatus.IN_PROGRESS
+          ? '处理中'
+          : '待处理';
+    await this.notifications.push(
+      ticket.userId,
+      'TICKET',
+      `工单状态更新为「${label}」`,
+      trimmed ? trimmed.slice(0, 80) : `你的工单「${ticket.subject}」状态已更新`,
+      '/support',
+      id,
+    );
+
+    return { id, status, noteSaved: Boolean(trimmed) };
   }
 }

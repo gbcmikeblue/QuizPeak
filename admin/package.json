@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@quizpeak/i18n": "0.1.0",
     "@quizpeak/shared": "0.1.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.469.0",
