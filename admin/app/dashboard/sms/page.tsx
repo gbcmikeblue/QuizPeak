@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Copy, RefreshCw, ShieldAlert } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { useI18n } from '@/lib/i18n';
 import { RevealPhone } from '@/components/reveal-phone';
 
 interface SmsRow {
@@ -45,6 +46,7 @@ const CLIENTS = [
 ];
 
 export default function SmsPage() {
+  const { tt, date } = useI18n();
   const [data, setData] = useState<SmsList | null>(null);
   const [phone, setPhone] = useState('');
   const [scene, setScene] = useState('');
@@ -64,11 +66,11 @@ export default function SmsPage() {
       if (client) query.set('client', client);
       setData(await apiFetch<SmsList>(`/admin/sms?${query.toString()}`));
     } catch (e) {
-      setError(e instanceof Error ? e.message : '加载失败');
+      setError(e instanceof Error ? e.message : tt('加载失败'));
     } finally {
       setLoading(false);
     }
-  }, [page, phone, scene, client]);
+  }, [page, phone, scene, client, tt]);
 
   useEffect(() => {
     void load();
@@ -80,7 +82,7 @@ export default function SmsPage() {
       setCopied(code);
       setTimeout(() => setCopied(''), 1500);
     } catch {
-      setError('复制失败，请手动选中复制');
+      setError(tt('复制失败，请手动选中复制'));
     }
   }
 
@@ -90,23 +92,23 @@ export default function SmsPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold">短信记录</h1>
+          <h1 className="text-xl font-semibold">{tt('短信记录')}</h1>
           <p className="mt-1 text-sm text-[#667085]">
-            本地联调时在这里查看验证码；正式环境接入短信服务商后验证码自动脱敏。
+            {tt('本地联调时在这里查看验证码；正式环境接入短信服务商后验证码自动脱敏。')}
           </p>
         </div>
         <div className="text-sm text-[#667085]">
-          今日发送 <span className="font-semibold text-[#101828]">{data?.todayCount ?? '—'}</span> 条
+          {tt('今日发送 {n} 条', { n: data?.todayCount ?? '—' })}
         </div>
       </div>
 
       <div className="card flex flex-wrap items-end gap-3">
         <div>
-          <label className="label">手机号</label>
+          <label className="label">{tt('手机号')}</label>
           <input
             className="input w-[180px]"
             value={phone}
-            placeholder="模糊搜索"
+            placeholder={tt('模糊搜索')}
             onChange={(e) => {
               setPhone(e.target.value.trim());
               setPage(1);
@@ -114,7 +116,7 @@ export default function SmsPage() {
           />
         </div>
         <div>
-          <label className="label">场景</label>
+          <label className="label">{tt('场景')}</label>
           <select
             className="input w-[150px]"
             value={scene}
@@ -125,13 +127,13 @@ export default function SmsPage() {
           >
             {SCENES.map((s) => (
               <option key={s.value} value={s.value}>
-                {s.label}
+                {tt(s.label)}
               </option>
             ))}
           </select>
         </div>
         <div>
-          <label className="label">端</label>
+          <label className="label">{tt('端')}</label>
           <select
             className="input w-[130px]"
             value={client}
@@ -142,35 +144,37 @@ export default function SmsPage() {
           >
             {CLIENTS.map((c) => (
               <option key={c.value} value={c.value}>
-                {c.label}
+                {tt(c.label)}
               </option>
             ))}
           </select>
         </div>
         <button type="button" className="btn-ghost h-10" onClick={() => void load()} disabled={loading}>
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-          刷新
+          {tt('刷新')}
         </button>
         {data && !data.devMode ? (
           <span className="flex items-center gap-1 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
-            <ShieldAlert size={14} /> 当前为生产模式，验证码已脱敏
+            <ShieldAlert size={14} /> {tt('当前为生产模式，验证码已脱敏')}
           </span>
         ) : null}
       </div>
 
-      {error ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p> : null}
+      {error ? (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+      ) : null}
 
       <div className="card overflow-hidden p-0">
         <table className="table-base">
           <thead>
             <tr>
-              <th>发送时间</th>
-              <th>手机号</th>
-              <th>场景</th>
-              <th>端</th>
-              <th>验证码</th>
-              <th>有效期</th>
-              <th>状态</th>
+              <th>{tt('发送时间')}</th>
+              <th>{tt('手机号')}</th>
+              <th>{tt('场景')}</th>
+              <th>{tt('端')}</th>
+              <th>{tt('验证码')}</th>
+              <th>{tt('有效期')}</th>
+              <th>{tt('状态')}</th>
             </tr>
           </thead>
           <tbody>
@@ -178,15 +182,17 @@ export default function SmsPage() {
               data.list.map((row) => (
                 <tr key={row.id}>
                   <td className="whitespace-nowrap text-xs text-[#667085]">
-                    {new Date(row.createdAt).toLocaleString('zh-CN')}
+                    {date(row.createdAt, true)}
                   </td>
                   <td className="font-medium">
                     <RevealPhone source="SMS" id={row.id} masked={row.phone} />
                   </td>
-                  <td className="text-xs">{row.scene}</td>
+                  <td className="text-xs">
+                    {tt(SCENES.find((s) => s.value === row.scene)?.label ?? row.scene)}
+                  </td>
                   <td className="text-xs">
                     <span className="rounded bg-brand-soft px-2 py-0.5 text-[11px] text-brand-deep">
-                      {row.clientLabel ?? row.client}
+                      {tt(CLIENTS.find((c) => c.value === row.client)?.label ?? row.clientLabel ?? row.client)}
                     </span>
                   </td>
                   <td>
@@ -194,23 +200,31 @@ export default function SmsPage() {
                       type="button"
                       onClick={() => copy(row.code)}
                       className="inline-flex items-center gap-2 rounded-md bg-brand-soft px-2.5 py-1 font-mono text-[15px] tracking-widest text-[#0B3B27] hover:bg-brand/15"
-                      title="点击复制"
+                      title={tt('点击复制')}
                     >
                       {row.code}
                       <Copy size={13} />
-                      {copied === row.code ? <span className="text-[11px]">已复制</span> : null}
+                      {copied === row.code ? (
+                        <span className="text-[11px]">{tt('已复制')}</span>
+                      ) : null}
                     </button>
                   </td>
                   <td className="whitespace-nowrap text-xs text-[#667085]">
-                    {new Date(row.expiresAt).toLocaleTimeString('zh-CN')}
+                    {date(row.expiresAt, true)}
                   </td>
                   <td>
                     {row.used ? (
-                      <span className="rounded-full bg-[#F2F4F7] px-2 py-0.5 text-xs text-[#667085]">已使用</span>
+                      <span className="rounded-full bg-[#F2F4F7] px-2 py-0.5 text-xs text-[#667085]">
+                        {tt('已使用')}
+                      </span>
                     ) : row.expired ? (
-                      <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-600">已过期</span>
+                      <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-600">
+                        {tt('已过期')}
+                      </span>
                     ) : (
-                      <span className="rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand">可立即使用</span>
+                      <span className="rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand">
+                        {tt('可立即使用')}
+                      </span>
                     )}
                   </td>
                 </tr>
@@ -218,7 +232,9 @@ export default function SmsPage() {
             ) : (
               <tr>
                 <td colSpan={7} className="py-12 text-center text-sm text-[#98A2B3]">
-                  {loading ? '加载中…' : '还没有短信记录，去用户端点一次「获取验证码」'}
+                  {loading
+                    ? tt('加载中…')
+                    : tt('还没有短信记录，去用户端点一次「获取验证码」')}
                 </td>
               </tr>
             )}
@@ -227,7 +243,7 @@ export default function SmsPage() {
       </div>
 
       <div className="flex items-center justify-between text-sm text-[#667085]">
-        <span>共 {data?.total ?? 0} 条</span>
+        <span>{tt('共 {n} 条', { n: data?.total ?? 0 })}</span>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -235,7 +251,7 @@ export default function SmsPage() {
             disabled={page <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
           >
-            上一页
+            {tt('上一页')}
           </button>
           <span>
             {page} / {totalPages}
@@ -246,7 +262,7 @@ export default function SmsPage() {
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
           >
-            下一页
+            {tt('下一页')}
           </button>
         </div>
       </div>

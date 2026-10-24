@@ -595,6 +595,42 @@ export const enPhrases: Record<string, string> = {
     'Realtime notifications (SSE), orphan upload cleanup, API rate limiting',
   '数据报表：留存 / 答题分布 / 积分发放趋势导出':
     'Reporting: retention, quiz distribution, point-grant trends with export',
+  /* ---------------- 后台积分流水 ---------------- */
+  '全站积分发放与消耗（不涉及任何货币充值或提现）':
+    'All point grants and spending site-wide (no top-ups or cash-outs involved)',
+  '净变动': 'net change',
+  '全部类型': 'All types',
+  '类型': 'Type',
+  '后台调整': 'Admin adjustment',
+  '手机号 / 昵称': 'Phone / nickname',
+  '时间': 'Time',
+  '变动': 'Change',
+  '变动后余额': 'Balance after',
+  '备注': 'Note',
+  '暂无流水': 'No transactions yet',
+  /* ---------------- 后台短信记录 ---------------- */
+  '本地联调时在这里查看验证码；正式环境接入短信服务商后验证码自动脱敏。':
+    'Use this page to read codes during local testing; once a real SMS provider is wired up, codes are masked here.',
+  '今日发送 {n} 条': 'Sent today: {n}',
+  '模糊搜索': 'Fuzzy search',
+  '场景': 'Scene',
+  '全部场景': 'All scenes',
+  '重置密码': 'Reset password',
+  '绑定手机': 'Bind phone',
+  '端': 'Client',
+  '全部端': 'All clients',
+  'PC 网页': 'PC web',
+  '小程序': 'Mini program',
+  '当前为生产模式，验证码已脱敏': 'Production mode — codes are masked',
+  '发送时间': 'Sent at',
+  '有效期': 'Expires',
+  '点击复制': 'Click to copy',
+  '复制失败，请手动选中复制': 'Copy failed — select and copy manually',
+  '已使用': 'Used',
+  '已过期': 'Expired',
+  '可立即使用': 'Active',
+  '还没有短信记录，去用户端点一次「获取验证码」':
+    'No SMS records yet — tap “Get code” on the user side first',
   /* ---------------- 后台题库管理 ---------------- */
   '题库、关卡与题目；上架后用户端可见': 'Quizzes, levels and questions — published ones are visible to users',
   '新建题库': 'New quiz',

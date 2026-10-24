@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { useI18n } from '@/lib/i18n';
 
 interface Row {
   id: string;
@@ -41,6 +42,7 @@ const TYPES = [
 const LABEL = new Map(TYPES.filter((t) => t.value).map((t) => [t.value, t.label]));
 
 export default function PointsLedgerPage() {
+  const { tt, date } = useI18n();
   const [data, setData] = useState<ListData | null>(null);
   const [type, setType] = useState('');
   const [keyword, setKeyword] = useState('');
@@ -57,11 +59,11 @@ export default function PointsLedgerPage() {
       if (keyword) q.set('keyword', keyword);
       setData(await apiFetch<ListData>(`/admin/point-transactions?${q}`));
     } catch (e) {
-      setError(e instanceof Error ? e.message : '加载失败');
+      setError(e instanceof Error ? e.message : tt('加载失败'));
     } finally {
       setLoading(false);
     }
-  }, [page, type, keyword]);
+  }, [page, type, keyword, tt]);
 
   useEffect(() => {
     void load();
@@ -73,12 +75,18 @@ export default function PointsLedgerPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold">积分流水</h1>
-          <p className="mt-1 text-sm text-[#667085]">全站积分发放与消耗（不涉及任何货币充值或提现）</p>
+          <h1 className="text-xl font-semibold">{tt('积分流水')}</h1>
+          <p className="mt-1 text-sm text-[#667085]">
+            {tt('全站积分发放与消耗（不涉及任何货币充值或提现）')}
+          </p>
         </div>
         <span className="text-sm text-[#667085]">
-          共 {data?.total ?? 0} 条 · 净变动{' '}
-          <span className={(data?.sum ?? 0) >= 0 ? 'font-semibold text-brand' : 'font-semibold text-red-600'}>
+          {tt('共 {n} 条', { n: data?.total ?? 0 })} · {tt('净变动')}{' '}
+          <span
+            className={
+              (data?.sum ?? 0) >= 0 ? 'font-semibold text-brand' : 'font-semibold text-red-600'
+            }
+          >
             {data?.sum ?? 0}
           </span>
         </span>
@@ -86,7 +94,7 @@ export default function PointsLedgerPage() {
 
       <div className="card flex flex-wrap items-end gap-3">
         <div>
-          <label className="label">类型</label>
+          <label className="label">{tt('类型')}</label>
           <select
             className="input w-[160px]"
             value={type}
@@ -97,16 +105,16 @@ export default function PointsLedgerPage() {
           >
             {TYPES.map((t) => (
               <option key={t.value} value={t.value}>
-                {t.label}
+                {tt(t.label)}
               </option>
             ))}
           </select>
         </div>
         <div>
-          <label className="label">用户</label>
+          <label className="label">{tt('用户')}</label>
           <input
             className="input w-[220px]"
-            placeholder="手机号 / 昵称"
+            placeholder={tt('手机号 / 昵称')}
             value={keyword}
             onChange={(e) => {
               setKeyword(e.target.value.trim());
@@ -115,22 +123,24 @@ export default function PointsLedgerPage() {
           />
         </div>
         <button type="button" className="btn-ghost h-10" onClick={() => void load()} disabled={loading}>
-          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> 刷新
+          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> {tt('刷新')}
         </button>
       </div>
 
-      {error ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p> : null}
+      {error ? (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+      ) : null}
 
       <div className="card overflow-hidden p-0">
         <table className="table-base">
           <thead>
             <tr>
-              <th>时间</th>
-              <th>用户</th>
-              <th>类型</th>
-              <th>变动</th>
-              <th>变动后余额</th>
-              <th>备注</th>
+              <th>{tt('时间')}</th>
+              <th>{tt('用户')}</th>
+              <th>{tt('类型')}</th>
+              <th>{tt('变动')}</th>
+              <th>{tt('变动后余额')}</th>
+              <th>{tt('备注')}</th>
             </tr>
           </thead>
           <tbody>
@@ -138,13 +148,13 @@ export default function PointsLedgerPage() {
               data.list.map((row) => (
                 <tr key={row.id}>
                   <td className="whitespace-nowrap text-xs text-[#667085]">
-                    {new Date(row.createdAt).toLocaleString('zh-CN')}
+                    {date(row.createdAt, true)}
                   </td>
                   <td className="text-sm">
                     <p className="font-medium">{row.user.nickname ?? row.user.username}</p>
                     <p className="text-xs text-[#98A2B3]">{row.user.phone}</p>
                   </td>
-                  <td className="text-sm">{LABEL.get(row.type) ?? row.type}</td>
+                  <td className="text-sm">{tt(LABEL.get(row.type) ?? row.type)}</td>
                   <td className={`text-sm font-medium ${row.change > 0 ? 'text-brand' : 'text-red-600'}`}>
                     {row.change > 0 ? `+${row.change}` : row.change}
                   </td>
@@ -155,7 +165,7 @@ export default function PointsLedgerPage() {
             ) : (
               <tr>
                 <td colSpan={6} className="py-12 text-center text-sm text-[#98A2B3]">
-                  {loading ? '加载中…' : '暂无流水'}
+                  {loading ? tt('加载中…') : tt('暂无流水')}
                 </td>
               </tr>
             )}
@@ -164,10 +174,15 @@ export default function PointsLedgerPage() {
       </div>
 
       <div className="flex items-center justify-between text-sm text-[#667085]">
-        <span>第 {page} 页</span>
+        <span>{tt('第 {n} 页', { n: page })}</span>
         <div className="flex items-center gap-2">
-          <button type="button" className="btn-ghost h-9 px-3 text-[13px]" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-            上一页
+          <button
+            type="button"
+            className="btn-ghost h-9 px-3 text-[13px]"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            {tt('上一页')}
           </button>
           <span>
             {page} / {totalPages}
@@ -178,7 +193,7 @@ export default function PointsLedgerPage() {
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
           >
-            下一页
+            {tt('下一页')}
           </button>
         </div>
       </div>
