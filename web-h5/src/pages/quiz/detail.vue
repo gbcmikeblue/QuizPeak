@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { onLoad } from '@dcloudio/uni-app';
+import { onLoad, onShow } from '@dcloudio/uni-app';
 import {
   api,
   isLoggedIn,
@@ -11,6 +11,7 @@ import {
 } from '@/lib/api';
 import { loadMe, session } from '@/lib/session';
 import { difficultyColor, difficultyLabel } from '@/lib/format';
+import { syncNavTitle, tt } from '@/lib/i18n';
 
 const quizId = ref('');
 const quiz = ref<QuizDetail | null>(null);
@@ -34,10 +35,14 @@ async function load() {
 onLoad((options) => {
   quizId.value = (options?.id as string) ?? '';
   if (!quizId.value) {
-    error.value = '缺少题库 ID';
+    error.value = tt('缺少题库 ID');
     return;
   }
   void load();
+});
+
+onShow(() => {
+  syncNavTitle();
 });
 
 function levelOf(levelNo: number): LevelProgress | undefined {
@@ -58,7 +63,7 @@ async function start(levelNo: number) {
   if (!detail) return;
 
   if (!isUnlocked(levelNo)) {
-    uni.showToast({ title: '先通过上一关才能解锁', icon: 'none' });
+    uni.showToast({ title: tt('先通过上一关才能解锁'), icon: 'none' });
     return;
   }
 
@@ -66,9 +71,9 @@ async function start(levelNo: number) {
   if (needPay) {
     const confirmed = await new Promise<boolean>((resolve) => {
       uni.showModal({
-        title: '解锁题库',
-        content: `本次将消耗 ${detail.enrollFee} 积分，确认开始？`,
-        confirmText: '确认解锁',
+        title: tt('解锁题库'),
+        content: tt('本次将消耗 {n} 积分，确认开始？', { n: detail.enrollFee }),
+        confirmText: tt('确认解锁'),
         success: (res) => resolve(res.confirm),
         fail: () => resolve(false),
       });
@@ -103,41 +108,45 @@ async function start(levelNo: number) {
             class="tag"
             :style="{ color: difficultyColor(quiz.difficulty), background: `${difficultyColor(quiz.difficulty)}1a` }"
           >
-            {{ difficultyLabel(quiz.difficulty) }}
+            {{ tt(difficultyLabel(quiz.difficulty)) }}
           </text>
-          <text class="muted">{{ quiz.category?.name ?? '综合' }}</text>
+          <text class="muted">{{ quiz.category?.name ?? tt('综合') }}</text>
         </view>
 
         <view class="stats">
           <view class="stat">
             <view class="stat-num">{{ quiz.levelsCount }}</view>
-            <view class="muted">关卡</view>
+            <view class="muted">{{ tt('关卡') }}</view>
           </view>
           <view class="stat">
             <view class="stat-num">{{ quiz.questionTotal }}</view>
-            <view class="muted">题目</view>
+            <view class="muted">{{ tt('题目') }}</view>
           </view>
           <view class="stat">
             <view class="stat-num">{{ quiz.playerCount }}</view>
-            <view class="muted">挑战人数</view>
+            <view class="muted">{{ tt('挑战人数') }}</view>
           </view>
           <view class="stat">
-            <view class="stat-num">{{ quiz.enrollFee > 0 ? quiz.enrollFee : '免费' }}</view>
-            <view class="muted">{{ quiz.enrollFee > 0 ? '解锁积分' : '门槛' }}</view>
+            <view class="stat-num">{{ quiz.enrollFee > 0 ? quiz.enrollFee : tt('免费') }}</view>
+            <view class="muted">{{ quiz.enrollFee > 0 ? tt('解锁积分') : tt('门槛') }}</view>
           </view>
         </view>
 
         <view v-if="quiz.description" class="desc">{{ quiz.description }}</view>
         <view class="rule">
-          总时长约 {{ Math.round(quiz.durationSec / 60) }} 分钟，单题限时以答题页倒计时为准；通过率 ≥
-          {{ quiz.unlockThreshold }}% 解锁下一关。
+          {{
+            tt('总时长约 {m} 分钟，单题限时以答题页倒计时为准；通过率 ≥ {rate}% 解锁下一关。', {
+              m: Math.round(quiz.durationSec / 60),
+              rate: quiz.unlockThreshold,
+            })
+          }}
         </view>
       </view>
 
       <view class="section-title">
-        <text>关卡</text>
-        <text v-if="session.me" class="more">我的积分 {{ session.me.points }}</text>
-        <text v-else class="more" @tap="requireLogin()">登录查看进度</text>
+        <text>{{ tt('关卡') }}</text>
+        <text v-if="session.me" class="more">{{ tt('我的积分 {n}', { n: session.me.points }) }}</text>
+        <text v-else class="more" @tap="requireLogin()">{{ tt('登录查看进度') }}</text>
       </view>
 
       <view class="levels">
@@ -151,22 +160,24 @@ async function start(levelNo: number) {
           <view class="level-no">{{ level.levelNo }}</view>
           <view class="grow">
             <view class="level-title">
-              第 {{ level.levelNo }} 关
+              {{ tt('第 {n} 关', { n: level.levelNo }) }}
               <text v-if="!isUnlocked(level.levelNo)" class="lock">🔒</text>
             </view>
             <view class="muted">
-              {{ level.questionCount }} 题 · 通过率 ≥ {{ level.passThreshold }}%
-              <text v-if="levelOf(level.levelNo)?.best.rate"> · 最佳 {{ levelOf(level.levelNo)?.best.rate }}%</text>
+              {{ tt('{n} 题 · 通过率 ≥ {rate}%', { n: level.questionCount, rate: level.passThreshold }) }}
+              <text v-if="levelOf(level.levelNo)?.best.rate">
+                · {{ tt('最佳 {rate}%', { rate: levelOf(level.levelNo)?.best.rate }) }}
+              </text>
             </view>
           </view>
           <view class="level-action">
-            {{ levelOf(level.levelNo)?.best.attemptId ? '重做' : '开始' }}
+            {{ levelOf(level.levelNo)?.best.attemptId ? tt('重做') : tt('开始') }}
           </view>
         </view>
       </view>
     </template>
 
-    <view v-else-if="!error" class="empty">加载中…</view>
+    <view v-else-if="!error" class="empty">{{ tt('加载中…') }}</view>
   </view>
 </template>
 

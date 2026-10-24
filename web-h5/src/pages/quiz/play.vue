@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { onLoad, onUnload } from '@dcloudio/uni-app';
+import { onLoad, onShow, onUnload } from '@dcloudio/uni-app';
 import { api, type AnswerResult, type FinishResult, type PlayData, type PlayQuestion } from '@/lib/api';
 import { loadMe } from '@/lib/session';
 import { mmss } from '@/lib/format';
+import { syncNavTitle, tt } from '@/lib/i18n';
 
 const quizId = ref('');
 const levelNo = ref(1);
@@ -87,11 +88,13 @@ onLoad((options) => {
   quizId.value = (options?.id as string) ?? '';
   levelNo.value = Number(options?.level ?? 1);
   if (!quizId.value) {
-    error.value = '缺少题库 ID';
+    error.value = tt('缺少题库 ID');
     return;
   }
   void load();
 });
+
+onShow(() => syncNavTitle());
 
 onUnload(() => stopTimer());
 
@@ -111,7 +114,7 @@ async function submit() {
   if (!q || busy.value) return;
   const answer = isFill.value ? [fillText.value.trim()] : selected.value;
   if (answer.length === 0 || (isFill.value && !answer[0])) {
-    uni.showToast({ title: '请先作答', icon: 'none' });
+    uni.showToast({ title: tt('请先作答'), icon: 'none' });
     return;
   }
 
@@ -172,9 +175,9 @@ function exit() {
     return;
   }
   uni.showModal({
-    title: '退出答题',
-    content: '当前进度会保留，下次从这一关继续。',
-    confirmText: '退出',
+    title: tt('退出答题'),
+    content: tt('当前进度会保留，下次从这一关继续。'),
+    confirmText: tt('退出'),
     success: (res) => {
       if (res.confirm) uni.navigateBack();
     },
@@ -199,8 +202,10 @@ function retry() {
     <view class="topbar" :style="{ paddingTop: 'var(--status-bar-height)' }">
       <text class="close" @tap="exit">✕</text>
       <view class="grow">
-        <view class="bar-title">{{ attempt?.quiz.title ?? '答题' }}</view>
-        <view class="bar-sub">第 {{ levelNo }} 关 · {{ Math.min(index + 1, total || 1) }}/{{ total || '—' }}</view>
+        <view class="bar-title">{{ attempt?.quiz.title ?? tt('答题') }}</view>
+        <view class="bar-sub">
+          {{ tt('第 {n} 关', { n: levelNo }) }} · {{ Math.min(index + 1, total || 1) }}/{{ total || '—' }}
+        </view>
       </view>
       <view class="timer" :class="{ danger: remain <= 10 && !feedback }">{{ mmss(remain) }}</view>
     </view>
@@ -215,8 +220,16 @@ function retry() {
 
       <view class="stem-card">
         <view class="stem-type">
-          {{ current?.type === 'MULTI' ? '多选题' : current?.type === 'FILL' ? '填空题' : current?.type === 'TRUE_FALSE' ? '判断题' : '单选题' }}
-          <text class="stem-score">{{ current?.score }} 分</text>
+          {{
+            current?.type === 'MULTI'
+              ? tt('多选题')
+              : current?.type === 'FILL'
+                ? tt('填空题')
+                : current?.type === 'TRUE_FALSE'
+                  ? tt('判断题')
+                  : tt('单选题')
+          }}
+          <text class="stem-score">{{ tt('{n} 分', { n: current?.score ?? 0 }) }}</text>
         </view>
         <view class="stem">{{ current?.stem }}</view>
       </view>
@@ -227,7 +240,7 @@ function retry() {
             v-model="fillText"
             class="fill-input"
             type="text"
-            placeholder="请输入答案"
+            :placeholder="tt('请输入答案')"
             :disabled="!!feedback"
           />
         </view>
@@ -251,19 +264,23 @@ function retry() {
       <!-- 判分反馈 -->
       <view v-if="feedback" class="feedback" :class="feedback.isCorrect ? 'ok' : 'bad'">
         <view class="fb-title">
-          {{ feedback.isCorrect ? `答对了 +${feedback.score}` : `答错了（正确：${feedback.correctAnswer.join('、') || '—'}）` }}
+          {{
+            feedback.isCorrect
+              ? tt('答对了 +{n}', { n: feedback.score })
+              : tt('答错了（正确：{answer}）', { answer: feedback.correctAnswer.join('、') || '—' })
+          }}
         </view>
         <view v-if="feedback.analysis" class="fb-analysis">{{ feedback.analysis }}</view>
       </view>
 
       <view class="actions">
         <button v-if="!feedback" class="btn btn-primary" :disabled="busy" @tap="submit">
-          {{ busy ? '提交中…' : '提交答案' }}
+          {{ busy ? tt('提交中…') : tt('提交答案') }}
         </button>
         <button v-else class="btn btn-primary" @tap="next">
-          {{ index < total - 1 ? '下一题' : '交卷查看成绩' }}
+          {{ index < total - 1 ? tt('下一题') : tt('交卷查看成绩') }}
         </button>
-        <view v-if="!feedback" class="skip" @tap="skipQuestion">跳过这题</view>
+        <view v-if="!feedback" class="skip" @tap="skipQuestion">{{ tt('跳过这题') }}</view>
       </view>
     </view>
 
@@ -271,20 +288,21 @@ function retry() {
     <view v-if="finished" class="body">
       <view class="result-card">
         <view class="result-rate">{{ finished.rate }}<text class="unit">%</text></view>
-        <view class="muted">正确率</view>
+        <view class="muted">{{ tt('正确率') }}</view>
         <view class="result-score">
-          {{ finished.correctCount }} 对 / {{ finished.wrongCount }} 错 · {{ finished.score }}/{{ finished.totalScore }} 分
+          {{ finished.correctCount }} {{ tt('对') }} / {{ finished.wrongCount }} {{ tt('错') }} ·
+          {{ finished.score }}/{{ finished.totalScore }} {{ tt('分') }}
         </view>
         <view class="result-rewards">
-          <text v-if="finished.pointsEarned">+{{ finished.pointsEarned }} 积分</text>
+          <text v-if="finished.pointsEarned">+{{ finished.pointsEarned }} {{ tt('积分') }}</text>
           <text v-if="finished.xpEarned">+{{ finished.xpEarned }} XP</text>
         </view>
-        <view v-if="finished.nextLevelUnlocked" class="unlock-tip">🎉 下一关已解锁</view>
+        <view v-if="finished.nextLevelUnlocked" class="unlock-tip">🎉 {{ tt('下一关已解锁') }}</view>
       </view>
 
       <view class="actions">
-        <button class="btn btn-primary" @tap="backToQuiz">返回题库</button>
-        <button class="btn btn-ghost" @tap="retry">再答一次</button>
+        <button class="btn btn-primary" @tap="backToQuiz">{{ tt('返回题库') }}</button>
+        <button class="btn btn-ghost" @tap="retry">{{ tt('再答一次') }}</button>
       </view>
     </view>
   </view>

@@ -6,6 +6,7 @@ import { Crown, Loader2, Star, ThumbsUp } from 'lucide-react';
 import { API_BASE } from '@/lib/api';
 import { avatarOf } from '@/lib/avatars';
 import { authFetch, fetchMe, getToken, type Me } from '@/lib/auth';
+import { useI18n } from '@/lib/i18n';
 
 type Period = 'all' | 'month';
 
@@ -58,6 +59,7 @@ function Avatar({ row, size = 40 }: { row: Row; size?: number }) {
 }
 
 export default function LeaderboardPage() {
+  const { tt } = useI18n();
   const [period, setPeriod] = useState<Period>('all');
   const [data, setData] = useState<ListData | null>(null);
   const [me, setMe] = useState<Me | null>(null);
@@ -74,11 +76,11 @@ export default function LeaderboardPage() {
       const json = await res.json();
       setData(json.data);
     } catch {
-      setError('排行榜加载失败');
+      setError(tt('排行榜加载失败'));
     } finally {
       setLoading(false);
     }
-  }, [period]);
+  }, [period, tt]);
 
   useEffect(() => {
     void load();
@@ -100,9 +102,12 @@ export default function LeaderboardPage() {
     try {
       const res = await authFetch<{ points: number; balance: number }>('/points/like', {
         method: 'POST',
-        body: JSON.stringify({ toUserId: row.userId, targetType: period === 'month' ? 'LEADERBOARD_MONTH' : 'LEADERBOARD_ALL' }),
+        body: JSON.stringify({
+          toUserId: row.userId,
+          targetType: period === 'month' ? 'LEADERBOARD_MONTH' : 'LEADERBOARD_ALL',
+        }),
       });
-      setToast(`+${res.points} 积分`);
+      setToast(tt('+{n} 积分', { n: res.points }));
       setTimeout(() => setToast(''), 2000);
       setData((prev) =>
         prev
@@ -115,7 +120,7 @@ export default function LeaderboardPage() {
           : prev,
       );
     } catch (e) {
-      setError(e instanceof Error ? e.message : '点赞失败');
+      setError(e instanceof Error ? e.message : tt('点赞失败'));
     } finally {
       setLiking('');
     }
@@ -124,14 +129,14 @@ export default function LeaderboardPage() {
   const list = data?.list ?? [];
   const top3 = list.slice(0, 3);
   const rest = list.slice(3);
-  const metricLabel = period === 'all' ? '累计 XP' : '本月积分';
+  const metricLabel = period === 'all' ? tt('累计 XP') : tt('本月积分');
 
   return (
     <main className="container-page py-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">积分榜</h1>
-          <p className="mt-1 text-sm text-[#667085]">给上榜选手点赞，每次 +5 积分（每日 5 次）</p>
+          <h1 className="text-2xl font-bold">{tt('积分榜')}</h1>
+          <p className="mt-1 text-sm text-[#667085]">{tt('给上榜选手点赞，每次 +5 积分（每日 5 次）')}</p>
         </div>
         <div className="flex rounded-lg bg-[#F2F5F3] p-1 text-sm">
           {(
@@ -150,36 +155,38 @@ export default function LeaderboardPage() {
                   : 'rounded-md px-4 py-1.5 text-[#667085]'
               }
             >
-              {tab.label}
+              {tt(tab.label)}
             </button>
           ))}
         </div>
       </div>
 
-      {error ? <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p> : null}
+      {error ? (
+        <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+      ) : null}
 
       {me && myRank ? (
         <p className="mt-4 text-sm text-[#667085]">
-          我的{period === 'all' ? '总榜' : '月榜'}排名：
+          {period === 'all' ? tt('我的总榜排名：') : tt('我的月榜排名：')}
           <span className="ml-1 font-semibold text-brand">
             {period === 'all'
-              ? `第 ${myRank.all?.rank ?? '—'} 名 / ${myRank.all?.total ?? 0}`
+              ? tt('第 {n} 名 / {total}', { n: myRank.all?.rank ?? '—', total: myRank.all?.total ?? 0 })
               : myRank.month?.rank
-                ? `第 ${myRank.month.rank} 名 / ${myRank.month.total}`
-                : '本月暂无积分'}
+                ? tt('第 {n} 名 / {total}', { n: myRank.month.rank, total: myRank.month.total })
+                : tt('本月暂无积分')}
           </span>
         </p>
       ) : null}
 
       {loading && list.length === 0 ? (
-        <p className="py-16 text-center text-sm text-[#667085]">加载中…</p>
+        <p className="py-16 text-center text-sm text-[#667085]">{tt('加载中…')}</p>
       ) : list.length === 0 ? (
         <div className="mt-10 flex flex-col items-center text-center">
           <div className="grid h-24 w-24 place-items-center rounded-3xl bg-brand-soft text-4xl">🏅</div>
-          <p className="mt-5 text-lg font-semibold">榜单还没有人</p>
-          <p className="mt-1 text-sm text-[#667085]">完成一次答题就会进入排行榜</p>
+          <p className="mt-5 text-lg font-semibold">{tt('榜单还没有人')}</p>
+          <p className="mt-1 text-sm text-[#667085]">{tt('完成一次答题就会进入排行榜')}</p>
           <Link href="/quizzes" className="btn-primary mt-5 h-10 px-5 text-[13px]">
-            去答题
+            {tt('去答题')}
           </Link>
         </div>
       ) : (
@@ -199,7 +206,7 @@ export default function LeaderboardPage() {
                 </div>
                 <p className="mt-2 truncate font-medium">{row.nickname ?? row.username}</p>
                 <p className="mt-1 text-xs text-[#667085]">
-                  {row.quizzes} 场 · 平均 {row.avgRate}%
+                  {tt('{n} 场 · 平均 {rate}%', { n: row.quizzes, rate: row.avgRate })}
                 </p>
                 <p className="mt-2 flex items-center justify-center gap-1 text-sm font-semibold text-[#8A6A1F]">
                   <Star size={13} className="text-[#F5A623]" /> {row.metric} {metricLabel}
@@ -210,8 +217,12 @@ export default function LeaderboardPage() {
                   disabled={liking === row.userId || me?.id === row.userId}
                   className="btn-outline mt-3 h-8 w-full text-[12px]"
                 >
-                  {liking === row.userId ? <Loader2 size={12} className="animate-spin" /> : <ThumbsUp size={12} />}
-                  {me?.id === row.userId ? '这是你自己' : `点赞 ${row.likesReceived}`}
+                  {liking === row.userId ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <ThumbsUp size={12} />
+                  )}
+                  {me?.id === row.userId ? tt('这是你自己') : tt('点赞 {n}', { n: row.likesReceived })}
                 </button>
               </div>
             ))}
@@ -221,11 +232,11 @@ export default function LeaderboardPage() {
             <table className="table-base">
               <thead>
                 <tr>
-                  <th className="w-16">排名</th>
-                  <th>选手</th>
-                  <th>战绩</th>
+                  <th className="w-16">{tt('排名')}</th>
+                  <th>{tt('选手')}</th>
+                  <th>{tt('战绩')}</th>
                   <th>{metricLabel}</th>
-                  <th className="w-28">点赞</th>
+                  <th className="w-28">{tt('点赞')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -239,7 +250,7 @@ export default function LeaderboardPage() {
                       </div>
                     </td>
                     <td className="text-xs text-[#667085]">
-                      {row.quizzes} 场 · 平均 {row.avgRate}%
+                      {tt('{n} 场 · 平均 {rate}%', { n: row.quizzes, rate: row.avgRate })}
                     </td>
                     <td className="font-medium text-[#8A6A1F]">{row.metric}</td>
                     <td>
@@ -249,7 +260,11 @@ export default function LeaderboardPage() {
                         disabled={liking === row.userId || me?.id === row.userId}
                         className="flex items-center gap-1 rounded-full bg-brand-soft px-2.5 py-1 text-xs text-brand disabled:opacity-50"
                       >
-                        {liking === row.userId ? <Loader2 size={11} className="animate-spin" /> : <ThumbsUp size={11} />}
+                        {liking === row.userId ? (
+                          <Loader2 size={11} className="animate-spin" />
+                        ) : (
+                          <ThumbsUp size={11} />
+                        )}
                         {row.likesReceived}
                       </button>
                     </td>
