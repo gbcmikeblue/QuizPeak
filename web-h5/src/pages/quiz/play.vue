@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { onLoad, onShow, onUnload } from '@dcloudio/uni-app';
-import { api, type AnswerResult, type FinishResult, type PlayData, type PlayQuestion } from '@/lib/api';
+import {
+  api,
+  type AnswerResult,
+  type FinishResult,
+  type PlayData,
+  type PlayQuestion,
+  type ReviewData,
+} from '@/lib/api';
 import { loadMe } from '@/lib/session';
 import { mmss } from '@/lib/format';
 import { syncNavTitle, tt } from '@/lib/i18n';
@@ -19,6 +26,13 @@ const remain = ref(0);
 const busy = ref(false);
 const error = ref('');
 const skippedIds = ref<string[]>([]);
+/** 提示：当前题的提示文案（切题时清空） */
+const hintText = ref('');
+const hintBusy = ref(false);
+/** 交卷后的逐题解析 */
+const review = ref<ReviewData | null>(null);
+const reviewOpen = ref(false);
+const reviewLoading = ref(false);
 
 let timer: ReturnType<typeof setInterval> | null = null;
 
@@ -62,7 +76,48 @@ function resetQuestion() {
   selected.value = [];
   fillText.value = '';
   feedback.value = null;
+  hintText.value = '';
   startTimer();
+}
+
+/** 提示：首次免费（按场次），之后按积分扣费；文案来自题目解析 */
+async function useHint() {
+  const q = current.value;
+  if (!q || !attempt.value || hintBusy.value || hintText.value) return;
+  hintBusy.value = true;
+  try {
+    const res = await api.hint(attempt.value.attemptId, q.id);
+    hintText.value = res.hint;
+    uni.showToast({
+      title: res.free ? tt('本次提示免费') : tt('本次提示消耗 {n} 积分', { n: res.cost }),
+      icon: 'none',
+    });
+    if (!res.free) void loadMe(true);
+  } catch (err) {
+    uni.showToast({ title: (err as Error).message, icon: 'none' });
+  } finally {
+    hintBusy.value = false;
+  }
+}
+
+/** 交卷后拉取逐题解析 */
+async function toggleReview() {
+  if (reviewOpen.value) {
+    reviewOpen.value = false;
+    return;
+  }
+  if (!attempt.value) return;
+  reviewOpen.value = true;
+  if (review.value) return;
+  reviewLoading.value = true;
+  try {
+    review.value = await api.review(attempt.value.attemptId);
+  } catch (err) {
+    uni.showToast({ title: (err as Error).message || tt('加载解析失败'), icon: 'none' });
+    reviewOpen.value = false;
+  } finally {
+    reviewLoading.value = false;
+  }
 }
 
 /** 断点续答：跳到第一道未作答的题 */
@@ -232,6 +287,11 @@ function retry() {
           <text class="stem-score">{{ tt('{n} 分', { n: current?.score ?? 0 }) }}</text>
         </view>
         <view class="stem">{{ current?.stem }}</view>
+
+        <view v-if="hintText" class="hint-box">
+          <text class="hint-label">💡 {{ tt('提示') }}</text>
+          <text>{{ hintText }}</text>
+        </view>
       </view>
 
       <view class="options">
@@ -280,7 +340,12 @@ function retry() {
         <button v-else class="btn btn-primary" @tap="next">
           {{ index < total - 1 ? tt('下一题') : tt('交卷查看成绩') }}
         </button>
-        <view v-if="!feedback" class="skip" @tap="skipQuestion">{{ tt('跳过这题') }}</view>
+        <view v-if="!feedback" class="assist-row">
+          <view v-if="!hintText" class="assist" @tap="useHint">
+            💡 {{ hintBusy ? tt('加载中…') : tt('提示') }}
+          </view>
+          <view class="assist" @tap="skipQuestion">{{ tt('跳过这题') }}</view>
+        </view>
       </view>
     </view>
 
@@ -302,7 +367,38 @@ function retry() {
 
       <view class="actions">
         <button class="btn btn-primary" @tap="backToQuiz">{{ tt('返回题库') }}</button>
+        <button class="btn btn-ghost" @tap="toggleReview">
+          {{ reviewOpen ? tt('收起解析') : tt('查看逐题解析') }}
+        </button>
         <button class="btn btn-ghost" @tap="retry">{{ tt('再答一次') }}</button>
+      </view>
+
+      <view v-if="reviewOpen" class="review">
+        <view v-if="reviewLoading" class="empty">{{ tt('加载中…') }}</view>
+        <view v-for="item in review?.items ?? []" :key="item.questionId" class="review-item">
+          <view class="review-head">
+            <text class="review-index">{{ item.index }}</text>
+            <text
+              class="review-tag"
+              :class="item.skipped ? 'skipped' : item.isCorrect ? 'ok' : 'bad'"
+            >
+              {{ item.skipped ? tt('跳过') : item.isCorrect ? tt('对') : tt('错') }}
+            </text>
+          </view>
+          <view class="review-stem">{{ item.stem }}</view>
+          <view class="review-line">
+            <text class="review-key">{{ tt('你的答案') }}</text>
+            <text>{{ item.userAnswer.join('、') || tt('未作答') }}</text>
+          </view>
+          <view class="review-line">
+            <text class="review-key">{{ tt('正确答案') }}</text>
+            <text class="review-correct">{{ item.correctAnswer.join('、') || '—' }}</text>
+          </view>
+          <view v-if="item.analysis" class="review-analysis">
+            <text class="review-key">{{ tt('解析') }}</text>
+            <text>{{ item.analysis }}</text>
+          </view>
+        </view>
       </view>
     </view>
   </view>
@@ -506,11 +602,122 @@ function retry() {
   margin-top: 20rpx;
 }
 
-.skip {
+.assist-row {
+  display: flex;
+  justify-content: center;
+  gap: 40rpx;
   margin-top: 24rpx;
-  text-align: center;
+}
+
+.assist {
   font-size: 26rpx;
   color: $text-muted;
+  padding: 8rpx 4rpx;
+}
+
+.hint-box {
+  margin-top: 20rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 12rpx;
+  background: #fff7e6;
+  color: #8a6a1f;
+  font-size: 25rpx;
+  line-height: 1.6;
+}
+
+.hint-label {
+  display: block;
+  margin-bottom: 6rpx;
+  font-weight: 600;
+}
+
+.review {
+  margin-top: 24rpx;
+  padding-bottom: 40rpx;
+}
+
+.review-item {
+  background: #fff;
+  border-radius: $radius-card;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+}
+
+.review-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.review-index {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background: $brand-soft;
+  color: $brand-deep;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.review-tag {
+  font-size: 22rpx;
+  padding: 2rpx 14rpx;
+  border-radius: 999rpx;
+}
+
+.review-tag.ok {
+  background: #eef9f2;
+  color: #1c7a45;
+}
+
+.review-tag.bad {
+  background: #fdf0ef;
+  color: #b42318;
+}
+
+.review-tag.skipped {
+  background: #f2f4f7;
+  color: #667085;
+}
+
+.review-stem {
+  margin-top: 12rpx;
+  font-size: 27rpx;
+  color: $text-strong;
+  line-height: 1.55;
+}
+
+.review-line {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 10rpx;
+  font-size: 25rpx;
+  color: $text;
+  line-height: 1.5;
+}
+
+.review-key {
+  flex-shrink: 0;
+  color: $text-muted;
+}
+
+.review-correct {
+  color: $brand-deep;
+  font-weight: 600;
+}
+
+.review-analysis {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 12rpx;
+  padding-top: 12rpx;
+  border-top: 1rpx dashed $border;
+  font-size: 25rpx;
+  color: $text;
+  line-height: 1.6;
 }
 
 .result-card {

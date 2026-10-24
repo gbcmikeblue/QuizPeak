@@ -211,6 +211,37 @@ export interface AnswerResult {
   score: number;
 }
 
+export interface HintResult {
+  hint: string;
+  free: boolean;
+  cost: number;
+}
+
+export interface ReviewItem {
+  index: number;
+  questionId: string;
+  stem: string;
+  options: { key: string; text: string }[];
+  correctAnswer: string[];
+  userAnswer: string[];
+  isCorrect: boolean;
+  skipped: boolean;
+  analysis: string;
+}
+
+export interface ReviewData {
+  attempt: {
+    id: string;
+    score: number;
+    totalScore: number;
+    correctCount: number;
+    wrongCount: number;
+    durationSec: number;
+    finishedAt: string | null;
+  };
+  items: ReviewItem[];
+}
+
 export interface FinishResult {
   attemptId: string;
   score: number;
@@ -352,6 +383,12 @@ export const api = {
     }),
   finishAttempt: (attemptId: string) =>
     request<FinishResult>(`/attempts/${attemptId}/finish`, { method: 'POST' }),
+  hint: (attemptId: string, questionId: string) =>
+    request<HintResult>(`/attempts/${attemptId}/hint`, {
+      method: 'POST',
+      data: { questionId },
+    }),
+  review: (attemptId: string) => request<ReviewData>(`/attempts/${attemptId}/review`),
 
   /* 排行榜 */
   leaderboard: (period: 'all' | 'month', page = 1, pageSize = 20) =>

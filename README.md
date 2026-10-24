@@ -70,7 +70,7 @@ npm run dev:h5                  # http://localhost:3002  （H5，uni-app）
 | 小游戏（Wordling 三变体 / Hexling） | ✅ |
 | 题库管理后台 + 多角色权限矩阵 | ✅ |
 | 部署产物（Dockerfile ×3 / Nginx / compose / 备份 / 健康检查） | ✅ |
-| **H5（uni-app，`web-h5`）** | 🚧 开发中 |
+| **H5（uni-app，`web-h5`）** | ✅ 8 个页面主链路 + 提示 / 逐题解析 / 多语言（小程序待建） |
 | 小程序（uni-app 编译目标） | ⏳ 待建 |
 
 ## 积分规则（默认值，后台可改）
