@@ -1,5 +1,6 @@
 import { API_BASE } from '@/lib/api';
 import { CardShell } from '@/components/card-shell';
+import { getI18n } from '@/lib/locale';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,27 +26,27 @@ async function fetchArticles(): Promise<Article[]> {
 }
 
 export default async function ArticlesPage() {
-  const list = await fetchArticles();
+  const [{ tt, date }, list] = await Promise.all([getI18n(), fetchArticles()]);
 
   return (
     <main className="container-page py-10">
       <p className="text-xs font-medium tracking-wide text-brand">STORIES, INSIGHTS &amp; UPDATES</p>
-      <h1 className="mt-1 text-2xl font-bold">文章</h1>
-      <p className="mt-1 text-sm text-[#667085]">答题技巧、积分攻略与平台动态</p>
+      <h1 className="mt-1 text-2xl font-bold">{tt('文章')}</h1>
+      <p className="mt-1 text-sm text-[#667085]">{tt('答题技巧、积分攻略与平台动态')}</p>
 
       {list.length === 0 ? (
-        <p className="py-16 text-center text-sm text-[#98A2B3]">暂无文章</p>
+        <p className="py-16 text-center text-sm text-[#98A2B3]">{tt('暂无文章')}</p>
       ) : (
         <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((a) => (
             <CardShell
               key={a.id}
               href={`/articles/${a.slug}`}
-              actionLabel="阅读全文"
+              actionLabel={tt('阅读全文')}
               cover={{ src: null, alt: a.title, fallback: '📄' }}
               topRight={
                 <span className="rounded-full bg-white/90 px-2.5 py-1 text-[11px] text-[#344054]">
-                  {a.category?.name ?? '文章'}
+                  {a.category?.name ?? tt('文章')}
                 </span>
               }
               eyebrow={
@@ -57,11 +58,11 @@ export default async function ArticlesPage() {
               description={a.summary}
               meta={
                 <span>
-                  {a.publishedAt ? new Date(a.publishedAt).toLocaleDateString('zh-CN') : '—'} · {a.readMinutes} 分钟 ·{' '}
-                  {a.views} 次浏览
+                  {a.publishedAt ? date(a.publishedAt) : '—'} · {tt('{n} 分钟', { n: a.readMinutes })} ·{' '}
+                  {tt('{n} 次浏览', { n: a.views })}
                 </span>
               }
-              footerLeft={<span>{a.readMinutes} 分钟阅读</span>}
+              footerLeft={<span>{tt('{n} 分钟阅读', { n: a.readMinutes })}</span>}
             />
           ))}
         </div>

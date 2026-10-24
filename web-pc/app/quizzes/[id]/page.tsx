@@ -7,6 +7,7 @@ import { ArrowRight, Clock, Coins, Heart, HelpCircle, Lock, Users } from 'lucide
 import { ShareButton } from '@/components/share-button';
 import { API_BASE, type QuizDetail } from '@/lib/api';
 import { authFetch, getToken } from '@/lib/auth';
+import { useI18n } from '@/lib/i18n';
 
 interface LevelProgress {
   levelNo: number;
@@ -31,6 +32,7 @@ const DIFFICULTY: Record<string, string> = {
 export default function QuizDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { tt, date } = useI18n();
   const [quiz, setQuiz] = useState<QuizDetail | null>(null);
   const [progress, setProgress] = useState<Progress | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,7 +52,7 @@ export default function QuizDetailPage() {
       });
       setFavorited(res.favorited);
     } catch (e) {
-      setError(e instanceof Error ? e.message : '操作失败');
+      setError(e instanceof Error ? e.message : tt('操作失败'));
     }
   }
 
@@ -59,7 +61,7 @@ export default function QuizDetailPage() {
     fetch(`${API_BASE}/quizzes/${id}`)
       .then((r) => r.json())
       .then((json) => setQuiz(json.data))
-      .catch(() => setError('题库加载失败'))
+      .catch(() => setError(tt('题库加载失败')))
       .finally(() => setLoading(false));
 
     if (getToken()) {
@@ -70,7 +72,7 @@ export default function QuizDetailPage() {
         .then((res) => setFavorited(res.favorited))
         .catch(() => undefined);
     }
-  }, [id]);
+  }, [id, tt]);
 
   function requireLogin(action: () => void) {
     if (!getToken()) {
@@ -87,7 +89,7 @@ export default function QuizDetailPage() {
       await authFetch(`/quizzes/${id}/enroll`, { method: 'POST', body: '{}' });
       setProgress(await authFetch<Progress>(`/quizzes/${id}/progress`));
     } catch (e) {
-      setError(e instanceof Error ? e.message : '解锁失败');
+      setError(e instanceof Error ? e.message : tt('解锁失败'));
     } finally {
       setBusy(false);
     }
@@ -98,10 +100,10 @@ export default function QuizDetailPage() {
   }
 
   if (loading) {
-    return <div className="container-page py-16 text-sm text-[#667085]">加载中…</div>;
+    return <div className="container-page py-16 text-sm text-[#667085]">{tt('加载中…')}</div>;
   }
   if (!quiz) {
-    return <div className="container-page py-16 text-sm text-red-600">{error || '题库不存在'}</div>;
+    return <div className="container-page py-16 text-sm text-red-600">{error || tt('题库不存在')}</div>;
   }
 
   const locked = quiz.enrollFee > 0 && !progress?.enrolled;
@@ -110,7 +112,7 @@ export default function QuizDetailPage() {
   return (
     <main className="container-page py-8">
       <Link href="/quizzes" className="text-sm text-[#667085] hover:text-brand">
-        ← 返回题库
+        ← {tt('返回题库列表')}
       </Link>
 
       <section className="mt-4 overflow-hidden rounded-card border border-black/5">
@@ -126,15 +128,17 @@ export default function QuizDetailPage() {
             <h1 className="text-2xl font-bold">{quiz.title}</h1>
             <div className="mt-2 flex items-center gap-4 text-xs">
               <span className="flex items-center gap-1">
-                <Clock size={13} /> {Math.round(quiz.durationSec / 60)} 分钟
+                <Clock size={13} /> {tt('{n} 分钟', { n: Math.round(quiz.durationSec / 60) })}
               </span>
               <span className="flex items-center gap-1">
-                <HelpCircle size={13} /> {quiz.questionCount} 题 / 关
+                <HelpCircle size={13} /> {tt('{n} 题 / 关', { n: quiz.questionCount })}
               </span>
               <span className="flex items-center gap-1">
-                <Users size={13} /> {quiz.playerCount} 人
+                <Users size={13} /> {tt('{n} 人', { n: quiz.playerCount })}
               </span>
-              <span className="rounded-full bg-white/20 px-2 py-0.5">{DIFFICULTY[quiz.difficulty]}</span>
+              <span className="rounded-full bg-white/20 px-2 py-0.5">
+                {tt(DIFFICULTY[quiz.difficulty] ?? quiz.difficulty)}
+              </span>
             </div>
           </div>
         </div>
@@ -143,17 +147,17 @@ export default function QuizDetailPage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
         <section className="space-y-6">
           <div className="card">
-            <h2 className="text-[15px] font-semibold">题库介绍</h2>
+            <h2 className="text-[15px] font-semibold">{tt('题库介绍')}</h2>
             <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[#475467]">
-              {quiz.description || '暂无介绍'}
+              {quiz.description || tt('暂无介绍')}
             </p>
           </div>
 
           <div className="card">
             <div className="flex items-center justify-between">
-              <h2 className="text-[15px] font-semibold">关卡</h2>
+              <h2 className="text-[15px] font-semibold">{tt('关卡')}</h2>
               <span className="text-xs text-[#98A2B3]">
-                上一关正确率达到 {quiz.unlockThreshold}% 解锁下一关
+                {tt('上一关正确率达到 {n}% 解锁下一关', { n: quiz.unlockThreshold })}
               </span>
             </div>
 
@@ -179,7 +183,9 @@ export default function QuizDetailPage() {
                       {!unlocked ? <Lock size={13} /> : <ArrowRight size={13} className="text-brand" />}
                     </span>
                     <span className="text-[11px] text-[#667085]">
-                      {best && best.rate > 0 ? `最好 ${best.rate}%` : `${info?.questionCount ?? quiz.questionCount} 题`}
+                      {best && best.rate > 0
+                        ? tt('最好 {n}%', { n: best.rate })
+                        : tt('{n} 题', { n: info?.questionCount ?? quiz.questionCount })}
                     </span>
                   </button>
                 );
@@ -192,23 +198,23 @@ export default function QuizDetailPage() {
           <div className="card">
             <dl className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <dt className="text-[#667085]">分类</dt>
-                <dd>{quiz.category?.name ?? '未分类'}</dd>
+                <dt className="text-[#667085]">{tt('分类')}</dt>
+                <dd>{quiz.category?.name ?? tt('未分类')}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-[#667085]">解锁消耗</dt>
+                <dt className="text-[#667085]">{tt('解锁消耗')}</dt>
                 <dd className="flex items-center gap-1 font-medium">
                   {quiz.enrollFee > 0 ? (
                     <>
-                      <Coins size={13} className="text-[#F5A623]" /> {quiz.enrollFee} 积分
+                      <Coins size={13} className="text-[#F5A623]" /> {tt('{n} 积分', { n: quiz.enrollFee })}
                     </>
                   ) : (
-                    <span className="text-brand">免费</span>
+                    <span className="text-brand">{tt('免费')}</span>
                   )}
                 </dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-[#667085]">关卡数</dt>
+                <dt className="text-[#667085]">{tt('关卡数')}</dt>
                 <dd>{quiz.levelsCount}</dd>
               </div>
             </dl>
@@ -217,40 +223,51 @@ export default function QuizDetailPage() {
               type="button"
               onClick={toggleFavorite}
               className={`mt-4 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border text-[13px] transition ${
-                favorited ? 'border-brand bg-brand-soft text-brand' : 'border-black/10 text-[#475467] hover:bg-black/[0.03]'
+                favorited
+                  ? 'border-brand bg-brand-soft text-brand'
+                  : 'border-black/10 text-[#475467] hover:bg-black/[0.03]'
               }`}
             >
               <Heart size={14} className={favorited ? 'fill-brand text-brand' : ''} />
-              {favorited ? '已收藏' : '收藏题库'}
+              {favorited ? tt('已收藏') : tt('收藏题库')}
             </button>
 
             <ShareButton
-              title={`${quiz.title} · 知巅`}
-              text={`一起来挑战「${quiz.title}」，${quiz.levelsCount} 关等你闯`}
+              title={`${quiz.title} · ${tt('知巅')}`}
+              text={tt('一起来挑战「{title}」，{n} 关等你闯', { title: quiz.title, n: quiz.levelsCount })}
               path={`/quizzes/${quiz.id}`}
               className="mt-2 w-full"
             />
 
             {locked ? (
-              <button type="button" onClick={() => requireLogin(unlock)} disabled={busy} className="btn-primary mt-5 h-10 w-full">
-                {busy ? '解锁中…' : `解锁（${quiz.enrollFee} 积分）`}
+              <button
+                type="button"
+                onClick={() => requireLogin(unlock)}
+                disabled={busy}
+                className="btn-primary mt-5 h-10 w-full"
+              >
+                {busy ? tt('解锁中…') : tt('解锁（{n} 积分）', { n: quiz.enrollFee })}
               </button>
             ) : (
-              <button type="button" onClick={() => startLevel(1)} className="btn-primary mt-5 h-10 w-full">
-                {progress?.enrolled ? '从第 1 关开始' : '开始答题'}
+              <button
+                type="button"
+                onClick={() => startLevel(1)}
+                className="btn-primary mt-5 h-10 w-full"
+              >
+                {progress?.enrolled ? tt('从第 1 关开始') : tt('开始答题')}
               </button>
             )}
 
             {progress?.enrolled ? (
               <p className="mt-2 text-center text-[11px] text-[#98A2B3]">
-                已解锁，有效期至 {new Date(progress.expiresAt!).toLocaleDateString('zh-CN')}
+                {tt('已解锁，有效期至 {date}', { date: date(progress.expiresAt) })}
               </p>
             ) : null}
             {error ? <p className="mt-2 text-center text-xs text-red-600">{error}</p> : null}
           </div>
 
           <div className="rounded-card bg-brand-cream/60 p-4 text-xs leading-6 text-[#6B5B2E]">
-            单题限时 120 秒，超时按答错处理；多选题需全部选对才得分。
+            {tt('单题限时 120 秒，超时按答错处理；多选题需全部选对才得分。')}
           </div>
         </aside>
       </div>

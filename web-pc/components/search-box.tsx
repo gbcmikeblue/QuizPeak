@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Search, X } from 'lucide-react';
 import { authFetch, getToken } from '@/lib/auth';
 import { API_BASE } from '@/lib/api';
+import { useI18n } from '@/lib/i18n';
 
 interface SuggestItem {
   text: string;
@@ -28,6 +29,7 @@ export function SearchBox({
   autoFocus?: boolean;
 }) {
   const router = useRouter();
+  const { tt } = useI18n();
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   const [suggest, setSuggest] = useState<SuggestItem[]>([]);
@@ -110,7 +112,7 @@ export function SearchBox({
           ref={inputRef}
           autoFocus={autoFocus}
           className="w-full bg-transparent text-sm outline-none placeholder:text-[#98A2B3]"
-          placeholder={placeholder}
+          placeholder={tt(placeholder)}
           value={q}
           onFocus={() => setOpen(true)}
           onChange={(e) => {
@@ -130,7 +132,7 @@ export function SearchBox({
               inputRef.current?.focus();
             }}
             className="shrink-0 text-[#98A2B3] transition hover:text-[#475467]"
-            title="清空"
+            title={tt('清空')}
           >
             <X size={15} />
           </button>
@@ -140,9 +142,9 @@ export function SearchBox({
           onClick={() => go(q)}
           disabled={!q.trim()}
           className="shrink-0 rounded-full bg-brand px-3 py-1 text-[12px] font-medium text-white transition hover:bg-brand-deep disabled:cursor-not-allowed disabled:bg-[#EDF0EE] disabled:text-[#98A2B3]"
-          title="搜索"
+          title={tt('搜索')}
         >
-          搜索
+          {tt('搜索')}
         </button>
       </div>
 
@@ -159,25 +161,27 @@ export function SearchBox({
                 >
                   <span className="truncate">{s.text}</span>
                   <span className="shrink-0 rounded bg-[#F2F4F7] px-1.5 py-0.5 text-[11px] text-[#667085]">
-                    {TYPE_LABEL[s.type] ?? s.type}
+                    {tt(TYPE_LABEL[s.type] ?? s.type)}
                   </span>
                 </button>
               ))
             ) : (
-              <p className="px-4 py-3 text-center text-xs text-[#98A2B3]">没有匹配建议，回车直接搜索</p>
+              <p className="px-4 py-3 text-center text-xs text-[#98A2B3]">
+                {tt('没有匹配建议，回车直接搜索')}
+              </p>
             )
           ) : (
             <>
               <div className="flex items-center justify-between px-4 pt-3">
-                <span className="text-[11px] font-medium text-[#98A2B3]">搜索历史</span>
+                <span className="text-[11px] font-medium text-[#98A2B3]">{tt('搜索历史')}</span>
                 {history.length > 0 ? (
                   <button type="button" className="text-[11px] text-[#98A2B3] hover:text-red-500" onClick={clearHistory}>
-                    清空
+                    {tt('清空')}
                   </button>
                 ) : null}
               </div>
               {history.length === 0 ? (
-                <p className="px-4 py-3 text-xs text-[#98A2B3]">暂无搜索历史，试试搜「算法」</p>
+                <p className="px-4 py-3 text-xs text-[#98A2B3]">{tt('暂无搜索历史，试试搜「算法」')}</p>
               ) : (
                 <div className="mt-1 pb-2">
                   {history.map((h) => (
@@ -189,7 +193,7 @@ export function SearchBox({
                         type="button"
                         className="shrink-0 text-[#D0D5DD] opacity-0 transition group-hover:opacity-100 hover:text-red-500"
                         onClick={() => removeHistory(h.id)}
-                        title="从历史中删除"
+                        title={tt('从历史中删除')}
                       >
                         <X size={13} />
                       </button>

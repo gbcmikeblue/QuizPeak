@@ -1,8 +1,11 @@
+import type { Metadata } from 'next';
 import { BRAND } from '@quizpeak/shared';
+import { getI18n } from '@/lib/locale';
 
-export const metadata = {
-  title: `隐私政策 · ${BRAND.nameZh}`,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { tt } = await getI18n();
+  return { title: `${tt('隐私政策')} · ${BRAND.nameZh}` };
+}
 
 const SECTIONS = [
   {
@@ -65,35 +68,36 @@ const SECTIONS = [
   },
   {
     title: '八、政策更新与联系方式',
-    items: [
-      '本政策更新时会在站内公告，重大变更会通过站内通知告知。',
-      `如有疑问，可发送邮件至 ${BRAND.email}，或在站内提交客服工单。`,
-    ],
+    items: ['本政策更新时会在站内公告，重大变更会通过站内通知告知。', '如有疑问，可发送邮件至 {email}，或在站内提交客服工单。'],
   },
 ];
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const { tt } = await getI18n();
+
   return (
     <main className="container-page py-12">
       <div className="mx-auto max-w-[760px]">
         <p className="text-xs font-medium tracking-wide text-brand">PRIVACY POLICY</p>
-        <h1 className="mt-2 text-3xl font-bold">隐私政策</h1>
-        <p className="mt-3 text-sm text-[#98A2B3]">最近更新：2026-10-23</p>
+        <h1 className="mt-2 text-3xl font-bold">{tt('隐私政策')}</h1>
+        <p className="mt-3 text-sm text-[#98A2B3]">{tt('最近更新：{date}', { date: '2026-10-23' })}</p>
 
         <p className="mt-6 text-sm leading-7 text-[#475467]">
-          {BRAND.nameZh}（{BRAND.nameEn}，以下称「我们」）尊重并保护你的个人信息。
-          本政策说明我们在你使用答题、竞赛与积分功能时收集哪些信息、如何使用与保护这些信息。
+          {tt(
+            '{nameZh}（{nameEn}，以下称「我们」）尊重并保护你的个人信息。本政策说明我们在你使用答题、竞赛与积分功能时收集哪些信息、如何使用与保护这些信息。',
+            { nameZh: BRAND.nameZh, nameEn: BRAND.nameEn },
+          )}
         </p>
 
         <div className="mt-8 space-y-7">
           {SECTIONS.map((section) => (
             <section key={section.title}>
-              <h2 className="text-[15px] font-semibold text-[#0B3B27]">{section.title}</h2>
+              <h2 className="text-[15px] font-semibold text-[#0B3B27]">{tt(section.title)}</h2>
               <ul className="mt-3 space-y-2 text-sm leading-7 text-[#475467]">
                 {section.items.map((item) => (
                   <li key={item} className="flex gap-2">
                     <span className="mt-[10px] h-1 w-1 shrink-0 rounded-full bg-brand" />
-                    <span>{item}</span>
+                    <span>{tt(item, { email: BRAND.email })}</span>
                   </li>
                 ))}
               </ul>
@@ -102,8 +106,9 @@ export default function PrivacyPage() {
         </div>
 
         <p className="mt-10 rounded-lg bg-brand-soft/60 p-4 text-xs leading-6 text-[#4A6B5C]">
-          说明：本文为产品上线用的政策模板，正式发布前需由法务结合主体信息、实际接入的第三方 SDK
-          与备案情况审阅定稿。
+          {tt(
+            '说明：本文为产品上线用的政策模板，正式发布前需由法务结合主体信息、实际接入的第三方 SDK 与备案情况审阅定稿。',
+          )}
         </p>
       </div>
     </main>

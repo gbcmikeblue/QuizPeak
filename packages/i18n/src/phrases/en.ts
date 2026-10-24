@@ -443,6 +443,193 @@ export const enPhrases: Record<string, string> = {
   '收藏成功': 'Saved to favorites',
   '已取消收藏': 'Removed from favorites',
   '暂无收藏': 'No favorites yet',
+
+  /* ---------------- 文章 ---------------- */
+  /* ---------------- 题库详情 / 成绩 ---------------- */
+  '题库加载失败': 'Failed to load the quiz',
+  '解锁失败': 'Unlock failed',
+  '题库不存在': 'Quiz not found',
+  '返回题库列表': 'Back to quizzes',
+  '{n} 题 / 关': '{n} questions / level',
+  '{n} 人': '{n} players',
+  '题库介绍': 'About this quiz',
+  '暂无介绍': 'No description yet',
+  '上一关正确率达到 {n}% 解锁下一关': 'Score {n}% on the previous level to unlock the next',
+  '最好 {n}%': 'Best {n}%',
+  '分类': 'Category',
+  '未分类': 'Uncategorized',
+  '解锁消耗': 'Unlock cost',
+  '关卡数': 'Levels',
+  '收藏题库': 'Save quiz',
+  '一起来挑战「{title}」，{n} 关等你闯': 'Join me in “{title}” — {n} levels await',
+  '解锁中…': 'Unlocking…',
+  '解锁（{n} 积分）': 'Unlock ({n} points)',
+  '从第 1 关开始': 'Start from level 1',
+  '已解锁，有效期至 {date}': 'Unlocked until {date}',
+  '单题限时 120 秒，超时按答错处理；多选题需全部选对才得分。':
+    'Each question is timed at 120s and a timeout counts as wrong; multiple-choice questions need every correct option.',
+  '缺少作答记录': 'Missing attempt record',
+  '本关成绩': 'Level result',
+  '太棒了，可以挑战下一关': 'Great — you can take on the next level',
+  '不错，再练一次会更稳': 'Nice — one more run will make it solid',
+  '正确率还不够，建议回顾解析再战': 'Accuracy is not high enough — review the answers and try again',
+  '答对': 'Correct',
+  '答错': 'Wrong',
+  '用时': 'Time',
+  '逐题解析': 'Question review',
+  '你的答案：': 'Your answer:',
+  '正确答案：': 'Answer:',
+  '解析：': 'Explanation:',
+  '热词': 'Trending',
+  '没有匹配建议，回车直接搜索': 'No suggestions — press Enter to search',
+  '搜索历史': 'Search history',
+  '暂无搜索历史，试试搜「算法」': 'No history yet — try searching “algorithm”',
+  '从历史中删除': 'Remove from history',
+  '清空': 'Clear',
+  '「{q}」共 {n} 条结果': '“{q}” — {n} results',
+  '搜索中…': 'Searching…',
+  '输入关键词开始搜索，支持题库、竞赛与文章': 'Type a keyword — searches quizzes, contests and articles',
+  '没有找到「{q}」': 'No results for “{q}”',
+  '换个关键词试试，或直接去题库逛逛': 'Try another keyword, or browse the quizzes',
+  '浏览全部题库': 'Browse all quizzes',
+  '题库（{n}）': 'Quizzes ({n})',
+  '竞赛（{n}）': 'Contests ({n})',
+  '文章（{n}）': 'Articles ({n})',
+  '去答题 →': 'Take the quiz →',
+  '{date} 开赛': 'Starts {date}',
+  '{n} 积分报名': 'Entry {n} points',
+  '免费报名': 'Free entry',
+  '查看 →': 'View →',
+  '知巅': 'QuizPeak',
+  '链接已复制': 'Link copied',
+  '复制链接分享给朋友': 'Copy this link to share',
+  '答题技巧、积分攻略与平台动态': 'Quiz tips, point strategies and product updates',
+  '暂无文章': 'No articles yet',
+  '阅读全文': 'Read more',
+  '{n} 次浏览': '{n} views',
+  '{n} 分钟阅读': '{n} min read',
+
+  /* ---------------- 联系我们 ---------------- */
+  '使用中遇到问题，优先通过站内工单反馈（可上传截图、能追踪处理进度）。紧急问题可用下面的方式联系。':
+    'For help, use the in-site support ticket first (you can attach screenshots and track progress). Use the channels below for urgent issues.',
+  '邮箱': 'Email',
+  '客服电话': 'Support hours',
+  '响应时间': 'Response time',
+  '工作日 10:00 - 19:00': 'Weekdays 10:00–19:00',
+  '工单 24 小时内': 'Tickets within 24 hours',
+  '提交工单': 'Submit a ticket',
+  '登录后可在「客服工单」中新建工单，选择问题类型（账号 / 答题 / 积分 / 竞赛 / 其他），并附上截图与设备信息，处理进度可随时查看。':
+    'After signing in, open Support to create a ticket: pick a category (account / quiz / points / contest / other), attach screenshots and device info, and track progress any time.',
+  '去提交工单': 'Go to support',
+  '常见问题': 'FAQ',
+  '积分可以提现或购买吗？': 'Can points be cashed out or purchased?',
+  '不可以。积分是站内学习凭证，只能用于解锁题库与报名竞赛，不能购买、转让或兑换任何货币。':
+    'No. Points are an in-site learning credit, usable only to unlock quizzes and join contests — they cannot be bought, transferred or exchanged for money.',
+  '关卡为什么打不开？': 'Why is a level locked?',
+  '关卡按顺序解锁：上一关正确率达到 90% 才会开放下一关。可以在题库详情页查看每关的最好成绩。':
+    'Levels unlock in order: reach 90% accuracy in the previous level. You can see your best score per level on the quiz detail page.',
+  '签到中断了会怎样？': 'What happens if I miss a check-in day?',
+  '连续签到天数会从 1 重新计算，已获得的积分不会回收。连续签到越久，单日获得的积分越多（有上限）。':
+    'Your streak restarts at 1; points already earned are kept. Longer streaks earn more points per day (capped).',
+  '手机号换了怎么办？': 'How do I change my phone number?',
+  '请通过工单提交原手机号与可用的新手机号，客服核实后会协助变更。':
+    'Submit a ticket with your old and new phone numbers; support will verify and help you switch.',
+  '商务合作、内容授权请发送邮件至 {email}，标题注明「合作」。我们不在站内提供任何形式的现金兑换服务。':
+    'For partnerships or content licensing, email {email} with “Partnership” in the subject. We do not provide any cash-out service on this site.',
+
+  /* ---------------- 关于我们 ---------------- */
+  '{nameZh}（{nameEn}）是一个以知识为核心的答题闯关平台。我们把题库拆成关卡，用积分记录每一次进步：答对题目、每日签到、给上榜选手点赞，都会变成看得见的积分。积分只用于站内答题与竞赛，不能兑换任何货币。':
+    '{nameZh} ({nameEn}) is a knowledge-first quiz platform. We turn quizzes into levels and track every step with points: correct answers, daily check-ins and liking ranked players all become visible points. Points are only used for quizzes and contests on this site and cannot be exchanged for money.',
+  '{nameZh}（{nameEn}，以下称「我们」）尊重并保护你的个人信息。本政策说明我们在你使用答题、竞赛与积分功能时收集哪些信息、如何使用与保护这些信息。':
+    '{nameZh} ({nameEn}, “we”) respects and protects your personal data. This policy explains what we collect when you use quizzes, contests and points, and how we use and protect it.',
+  '说明：本文为产品上线用的政策模板，正式发布前需由法务结合主体信息、实际接入的第三方 SDK 与备案情况审阅定稿。':
+    'Note: this is a launch-ready policy template. Before publishing, legal should review it against the operating entity, the third-party SDKs actually integrated, and filing requirements.',
+  '我们怎么玩': 'How it works',
+  '关于积分，我们想说明白': 'A word about points',
+  '查看积分榜': 'View leaderboard',
+  '上榜选手': 'Ranked players',
+  '闯关模式': 'Level mode',
+  '积分获取': 'Earning points',
+  '10 关': '10 levels',
+  '4 种': '4 ways',
+  '闯关答题': 'Clear levels',
+  '每个题库 10 关，每关 8 题、单题 120 秒。上一关正确率达到 90%，解锁下一关。':
+    'Each quiz has 10 levels of 8 questions, 120 seconds per question. Score 90% on a level to unlock the next.',
+  '赚取积分': 'Earn points',
+  '每日签到、看广告、给上榜选手点赞、参加活动都能获得积分，不涉及任何充值。':
+    'Daily check-in, ads, liking ranked players and activities all earn points — no top-ups involved.',
+  '登上榜单': 'Join the leaderboard',
+  '答题累积 XP 与正确率，进入总榜与月榜；你的表现会被其他选手看到并点赞。':
+    'Quizzes build XP and accuracy, placing you on the all-time and monthly boards where others can like you.',
+  '· 积分是站内学习凭证，只能用于解锁题库、报名竞赛等站内消费。':
+    '· Points are an in-site learning credit for unlocking quizzes and joining contests.',
+  '· 积分不可购买、不可转让、不可提现，也无法兑换任何货币或实物。':
+    '· Points cannot be bought, transferred, withdrawn, or exchanged for money or goods.',
+  '· 积分来源全部为行为激励：签到、活动、点赞、看广告。':
+    '· Points come only from activities: check-ins, events, likes and ads.',
+  '· 平台可依规调整积分规则，调整前会在站内公告说明。':
+    '· We may adjust point rules and will announce changes in-site beforehand.',
+
+  /* ---------------- 隐私政策 ---------------- */
+  '最近更新：{date}': 'Last updated: {date}',
+  '一、我们收集哪些信息': '1. Information we collect',
+  '二、如何使用这些信息': '2. How we use it',
+  '三、关于积分（重要）': '3. About points (important)',
+  '四、信息共享与披露': '4. Sharing and disclosure',
+  '五、存储与安全': '5. Storage and security',
+  '六、你的权利': '6. Your rights',
+  '七、未成年人': '7. Minors',
+  '八、政策更新与联系方式': '8. Updates and contact',
+  '账号信息：手机号（用于登录与找回）、昵称、头像、可选的姓名与地址。':
+    'Account: phone number (for sign-in and recovery), nickname, avatar, optional name and address.',
+  '答题数据：作答记录、得分、用时、关卡进度、竞赛名次。':
+    'Quiz data: attempts, scores, time spent, level progress, contest rankings.',
+  '积分数据：积分余额、积分流水（签到、活动、点赞、看广告、答题奖励、解锁消费）。':
+    'Points data: balance and ledger (check-ins, events, likes, ads, quiz rewards, unlock spending).',
+  '设备与日志：IP、设备类型、浏览器标识、访问时间，用于安全风控与故障排查。':
+    'Device and logs: IP, device type, browser identifier, access time — used for risk control and troubleshooting.',
+  '提供核心功能：登录、答题判分、关卡解锁、竞赛排名、积分结算。':
+    'Core features: sign-in, grading, level unlocking, contest ranking, point settlement.',
+  '安全与风控：识别异常答题（切屏、脚本）、防刷积分（广告与点赞的每日次数限制）。':
+    'Security: detecting abnormal behaviour (tab switching, scripts) and preventing point abuse (daily caps on ads and likes).',
+  '服务改进：以聚合方式统计题库难度、关卡通过率，用于优化题目质量。':
+    'Improvement: aggregated statistics on quiz difficulty and pass rates to refine questions.',
+  '通知：仅在必要时发送与账号、竞赛、积分相关的站内通知。':
+    'Notifications: only for account, contest and points matters, only when necessary.',
+  '积分是站内学习凭证，不具备货币属性，不能购买、转让、提现，也不能兑换任何货币或实物。':
+    'Points are an in-site learning credit with no monetary value: they cannot be bought, transferred, withdrawn or exchanged for money or goods.',
+  '积分仅通过行为获得：每日签到、参加活动、给上榜选手点赞、观看广告。':
+    'Points are earned only through actions: daily check-in, events, liking ranked players and watching ads.',
+  '平台不提供任何充值、支付、提现功能，因此不会收集你的银行卡、支付账户等金融信息。':
+    'We do not offer top-ups, payments or withdrawals, so we never collect bank card or payment account details.',
+  '平台可依规调整积分规则，调整前会在站内公告说明，已获得的积分不追溯回收。':
+    'We may adjust point rules with prior in-site notice; points already earned are not clawed back.',
+  '除法律法规要求或你明确授权外，我们不会向第三方提供你的个人信息。':
+    'We do not share personal data with third parties except as required by law or explicitly authorised by you.',
+  '排行榜会公开展示你的昵称、头像、等级、XP 与正确率，不展示手机号等敏感信息。':
+    'The leaderboard shows your nickname, avatar, level, XP and accuracy — never sensitive data such as your phone number.',
+  '接入的广告 SDK 可能收集设备标识用于广告投放，具体以该 SDK 的隐私说明为准。':
+    'Ad SDKs we integrate may collect device identifiers for ad delivery; refer to their privacy notices.',
+  '数据存储于中国境内服务器，传输过程使用 HTTPS 加密。':
+    'Data is stored on servers in mainland China and transferred over HTTPS.',
+  '密码使用不可逆哈希存储；后台账号与用户账号体系相互隔离。':
+    'Passwords are stored with irreversible hashing; admin and user accounts are kept separate.',
+  '手机号在后台展示时做脱敏处理（如 138****8888）。':
+    'Phone numbers are masked in the admin console (e.g. 138****8888).',
+  '你可以随时查看与修改昵称、头像等资料，并可在「个人中心 - 设置」修改密码。':
+    'You can view and edit your nickname and avatar, and change your password under Profile → Settings.',
+  '你可以申请注销账号；注销后账号数据将按法规要求保留必要期限后删除。':
+    'You can request account deletion; data is retained for the legally required period and then removed.',
+  '你可以通过工单申请导出或删除个人数据，我们会在 15 个工作日内处理。':
+    'You can request an export or deletion of your data via support; we handle it within 15 business days.',
+  '未满 14 周岁的用户应在监护人同意下使用本服务。':
+    'Users under 14 should use the service with guardian consent.',
+  '由于积分不可兑换货币，平台不涉及未成年人消费风险；仍建议监护人关注使用时长。':
+    'Points cannot be exchanged for money, so there is no spending risk for minors; guardians are still encouraged to watch usage time.',
+  '本政策更新时会在站内公告，重大变更会通过站内通知告知。':
+    'Policy updates are announced in-site; material changes are also sent as notifications.',
+  '如有疑问，可发送邮件至 {email}，或在站内提交客服工单。':
+    'Questions? Email {email} or open a support ticket in-site.',
   '给上榜选手点赞，每次 +5 积分（每日 5 次）':
     'Like a ranked player for +5 points each (5 per day)',
   '排行榜加载失败': 'Failed to load the leaderboard',

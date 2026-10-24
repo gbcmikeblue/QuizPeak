@@ -1,10 +1,13 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Clock, Mail, MessageSquareText, Phone } from 'lucide-react';
 import { BRAND } from '@quizpeak/shared';
+import { getI18n } from '@/lib/locale';
 
-export const metadata = {
-  title: `联系我们 · ${BRAND.nameZh}`,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { tt } = await getI18n();
+  return { title: `${tt('联系我们')} · ${BRAND.nameZh}` };
+}
 
 const FAQ = [
   {
@@ -25,14 +28,18 @@ const FAQ = [
   },
 ];
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const { tt } = await getI18n();
+
   return (
     <main className="container-page py-12">
       <div className="max-w-[760px]">
         <p className="text-xs font-medium tracking-wide text-brand">CONTACT US</p>
-        <h1 className="mt-2 text-3xl font-bold">联系我们</h1>
+        <h1 className="mt-2 text-3xl font-bold">{tt('联系我们')}</h1>
         <p className="mt-3 text-sm leading-7 text-[#667085]">
-          使用中遇到问题，优先通过站内工单反馈（可上传截图、能追踪处理进度）。紧急问题可用下面的方式联系。
+          {tt(
+            '使用中遇到问题，优先通过站内工单反馈（可上传截图、能追踪处理进度）。紧急问题可用下面的方式联系。',
+          )}
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
@@ -43,8 +50,8 @@ export default function ContactPage() {
           ].map((item) => (
             <div key={item.label} className="card">
               <item.icon size={18} className="text-brand" />
-              <p className="mt-3 text-xs text-[#667085]">{item.label}</p>
-              <p className="mt-1 break-words text-sm font-medium">{item.value}</p>
+              <p className="mt-3 text-xs text-[#667085]">{tt(item.label)}</p>
+              <p className="mt-1 break-words text-sm font-medium">{tt(item.value)}</p>
             </div>
           ))}
         </div>
@@ -52,32 +59,36 @@ export default function ContactPage() {
         <div className="card mt-6">
           <div className="flex items-center gap-2">
             <MessageSquareText size={18} className="text-brand" />
-            <h2 className="text-[15px] font-semibold">提交工单</h2>
+            <h2 className="text-[15px] font-semibold">{tt('提交工单')}</h2>
           </div>
           <p className="mt-2 text-sm leading-6 text-[#667085]">
-            登录后可在「客服工单」中新建工单，选择问题类型（账号 / 答题 / 积分 / 竞赛 / 其他），
-            并附上截图与设备信息，处理进度可随时查看。
+            {tt(
+              '登录后可在「客服工单」中新建工单，选择问题类型（账号 / 答题 / 积分 / 竞赛 / 其他），并附上截图与设备信息，处理进度可随时查看。',
+            )}
           </p>
           <Link href="/login?redirect=%2Fsupport" className="btn-primary mt-4 h-10 px-5 text-[13px]">
-            去提交工单
+            {tt('去提交工单')}
           </Link>
         </div>
 
-        <h2 className="mt-10 text-xl font-bold">常见问题</h2>
+        <h2 className="mt-10 text-xl font-bold">{tt('常见问题')}</h2>
         <div className="mt-4 space-y-2">
           {FAQ.map((item) => (
             <details key={item.q} className="group rounded-lg border border-black/5 bg-white p-4">
               <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium">
-                {item.q}
+                {tt(item.q)}
                 <span className="text-[#98A2B3] transition group-open:rotate-45">＋</span>
               </summary>
-              <p className="mt-3 text-sm leading-7 text-[#667085]">{item.a}</p>
+              <p className="mt-3 text-sm leading-7 text-[#667085]">{tt(item.a)}</p>
             </details>
           ))}
         </div>
 
         <p className="mt-8 text-xs leading-6 text-[#98A2B3]">
-          商务合作、内容授权请发送邮件至 {BRAND.email}，标题注明「合作」。我们不在站内提供任何形式的现金兑换服务。
+          {tt(
+            '商务合作、内容授权请发送邮件至 {email}，标题注明「合作」。我们不在站内提供任何形式的现金兑换服务。',
+            { email: BRAND.email },
+          )}
         </p>
       </div>
     </main>

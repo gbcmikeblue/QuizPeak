@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { API_BASE } from '@/lib/api';
 import { SearchBox } from '@/components/search-box';
+import { useI18n } from '@/lib/i18n';
 
 interface Quiz {
   id: string;
@@ -34,6 +35,7 @@ interface Result {
 }
 
 export default function SearchPage() {
+  const { tt, date } = useI18n();
   const [q, setQ] = useState('');
   const [data, setData] = useState<Result | null>(null);
   const [loading, setLoading] = useState(true);
@@ -69,8 +71,12 @@ export default function SearchPage() {
       <div className="flex flex-col gap-3">
         <p className="text-xs font-medium tracking-wide text-brand">SEARCH</p>
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-bold">搜索</h1>
-          {q ? <span className="text-sm text-[#667085]">「{q}」共 {data?.total ?? 0} 条结果</span> : null}
+          <h1 className="text-2xl font-bold">{tt('搜索')}</h1>
+          {q ? (
+            <span className="text-sm text-[#667085]">
+              {tt('「{q}」共 {n} 条结果', { q, n: data?.total ?? 0 })}
+            </span>
+          ) : null}
         </div>
         <SearchBox
           autoFocus={!q}
@@ -82,22 +88,26 @@ export default function SearchPage() {
       </div>
 
       {loading ? (
-        <p className="py-16 text-center text-sm text-[#667085]">搜索中…</p>
+        <p className="py-16 text-center text-sm text-[#667085]">{tt('搜索中…')}</p>
       ) : !q ? (
-        <p className="py-16 text-center text-sm text-[#98A2B3]">输入关键词开始搜索，支持题库、竞赛与文章</p>
+        <p className="py-16 text-center text-sm text-[#98A2B3]">
+          {tt('输入关键词开始搜索，支持题库、竞赛与文章')}
+        </p>
       ) : data && data.total === 0 ? (
         <div className="py-16 text-center">
-          <p className="text-lg font-semibold">没有找到「{q}」</p>
-          <p className="mt-1 text-sm text-[#667085]">换个关键词试试，或直接去题库逛逛</p>
+          <p className="text-lg font-semibold">{tt('没有找到「{q}」', { q })}</p>
+          <p className="mt-1 text-sm text-[#667085]">{tt('换个关键词试试，或直接去题库逛逛')}</p>
           <Link href="/quizzes" className="btn-primary mt-4 h-9 px-4 text-[13px]">
-            浏览全部题库
+            {tt('浏览全部题库')}
           </Link>
         </div>
       ) : (
         <div className="mt-6 space-y-8">
           {data && data.quizzes.length > 0 ? (
             <section>
-              <h2 className="text-[15px] font-semibold">题库（{data.quizzes.length}）</h2>
+              <h2 className="text-[15px] font-semibold">
+                {tt('题库（{n}）', { n: data.quizzes.length })}
+              </h2>
               <div className="mt-3 grid gap-3">
                 {data.quizzes.map((item) => (
                   <Link
@@ -108,10 +118,14 @@ export default function SearchPage() {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{item.title}</p>
                       <p className="mt-0.5 text-xs text-[#98A2B3]">
-                        {item.levelsCount} 关 · {item.enrollFee > 0 ? `${item.enrollFee} 积分解锁` : '免费'} · {item.playerCount} 人参与
+                        {tt('{n} 关', { n: item.levelsCount })} ·{' '}
+                        {item.enrollFee > 0
+                          ? tt('{n} 积分解锁', { n: item.enrollFee })
+                          : tt('免费')}{' '}
+                        · {tt('{n} 人参与', { n: item.playerCount })}
                       </p>
                     </div>
-                    <span className="shrink-0 text-[13px] text-brand">去答题 →</span>
+                    <span className="shrink-0 text-[13px] text-brand">{tt('去答题 →')}</span>
                   </Link>
                 ))}
               </div>
@@ -120,7 +134,9 @@ export default function SearchPage() {
 
           {data && data.contests.length > 0 ? (
             <section>
-              <h2 className="text-[15px] font-semibold">竞赛（{data.contests.length}）</h2>
+              <h2 className="text-[15px] font-semibold">
+                {tt('竞赛（{n}）', { n: data.contests.length })}
+              </h2>
               <div className="mt-3 grid gap-3">
                 {data.contests.map((item) => (
                   <Link
@@ -131,11 +147,13 @@ export default function SearchPage() {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{item.title}</p>
                       <p className="mt-0.5 text-xs text-[#98A2B3]">
-                        {new Date(item.startAt).toLocaleDateString('zh-CN')} 开赛 ·{' '}
-                        {item.entryFee > 0 ? `${item.entryFee} 积分报名` : '免费报名'}
+                        {tt('{date} 开赛', { date: date(item.startAt) })} ·{' '}
+                        {item.entryFee > 0
+                          ? tt('{n} 积分报名', { n: item.entryFee })
+                          : tt('免费报名')}
                       </p>
                     </div>
-                    <span className="shrink-0 text-[13px] text-brand">查看 →</span>
+                    <span className="shrink-0 text-[13px] text-brand">{tt('查看 →')}</span>
                   </Link>
                 ))}
               </div>
@@ -144,7 +162,9 @@ export default function SearchPage() {
 
           {data && data.articles.length > 0 ? (
             <section>
-              <h2 className="text-[15px] font-semibold">文章（{data.articles.length}）</h2>
+              <h2 className="text-[15px] font-semibold">
+                {tt('文章（{n}）', { n: data.articles.length })}
+              </h2>
               <div className="mt-3 grid gap-3">
                 {data.articles.map((item) => (
                   <Link
@@ -153,7 +173,9 @@ export default function SearchPage() {
                     className="card block py-3.5 transition hover:border-brand/40"
                   >
                     <p className="truncate text-sm font-medium">{item.title}</p>
-                    {item.summary ? <p className="mt-0.5 line-clamp-1 text-xs text-[#98A2B3]">{item.summary}</p> : null}
+                    {item.summary ? (
+                      <p className="mt-0.5 line-clamp-1 text-xs text-[#98A2B3]">{item.summary}</p>
+                    ) : null}
                   </Link>
                 ))}
               </div>
