@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus, RefreshCw } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { useI18n } from '@/lib/i18n';
 
 interface Row {
   id: string;
@@ -41,6 +42,7 @@ const DIFFICULTY_LABEL: Record<string, string> = {
 };
 
 export default function QuizzesPage() {
+  const { tt } = useI18n();
   const [data, setData] = useState<ListData | null>(null);
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState('');
@@ -57,11 +59,11 @@ export default function QuizzesPage() {
       if (status) q.set('status', status);
       setData(await apiFetch<ListData>(`/admin/quizzes?${q.toString()}`));
     } catch (e) {
-      setError(e instanceof Error ? e.message : '加载失败');
+      setError(e instanceof Error ? e.message : tt('加载失败'));
     } finally {
       setLoading(false);
     }
-  }, [page, keyword, status]);
+  }, [page, keyword, status, tt]);
 
   useEffect(() => {
     void load();
@@ -73,21 +75,21 @@ export default function QuizzesPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold">题库管理</h1>
-          <p className="mt-1 text-sm text-[#667085]">题库、关卡与题目；上架后用户端可见</p>
+          <h1 className="text-xl font-semibold">{tt('题库管理')}</h1>
+          <p className="mt-1 text-sm text-[#667085]">{tt('题库、关卡与题目；上架后用户端可见')}</p>
         </div>
         <Link href="/dashboard/quizzes/new" className="btn-primary h-10">
-          <Plus size={15} /> 新建题库
+          <Plus size={15} /> {tt('新建题库')}
         </Link>
       </div>
 
       <div className="card flex flex-wrap items-end gap-3">
         <div>
-          <label className="label">关键词</label>
+          <label className="label">{tt('关键词')}</label>
           <input
             className="input w-[220px]"
             value={keyword}
-            placeholder="标题 / slug"
+            placeholder={tt('标题 / slug')}
             onChange={(e) => {
               setKeyword(e.target.value.trim());
               setPage(1);
@@ -95,7 +97,7 @@ export default function QuizzesPage() {
           />
         </div>
         <div>
-          <label className="label">状态</label>
+          <label className="label">{tt('状态')}</label>
           <select
             className="input w-[140px]"
             value={status}
@@ -104,14 +106,14 @@ export default function QuizzesPage() {
               setPage(1);
             }}
           >
-            <option value="">全部</option>
-            <option value="DRAFT">草稿</option>
-            <option value="PUBLISHED">上架</option>
-            <option value="ARCHIVED">下架</option>
+            <option value="">{tt('全部')}</option>
+            <option value="DRAFT">{tt('草稿')}</option>
+            <option value="PUBLISHED">{tt('上架')}</option>
+            <option value="ARCHIVED">{tt('下架')}</option>
           </select>
         </div>
         <button type="button" className="btn-ghost h-10" onClick={() => void load()} disabled={loading}>
-          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> 刷新
+          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> {tt('刷新')}
         </button>
       </div>
 
@@ -121,14 +123,14 @@ export default function QuizzesPage() {
         <table className="table-base">
           <thead>
             <tr>
-              <th>标题</th>
-              <th>分类</th>
-              <th>难度</th>
-              <th>关卡 / 题目</th>
-              <th>解锁积分</th>
-              <th>参与</th>
-              <th>状态</th>
-              <th>操作</th>
+              <th>{tt('标题')}</th>
+              <th>{tt('分类')}</th>
+              <th>{tt('难度')}</th>
+              <th>{tt('关卡 / 题目')}</th>
+              <th>{tt('解锁积分')}</th>
+              <th>{tt('参与')}</th>
+              <th>{tt('状态')}</th>
+              <th>{tt('操作')}</th>
             </tr>
           </thead>
           <tbody>
@@ -142,18 +144,22 @@ export default function QuizzesPage() {
                       <p className="text-xs text-[#98A2B3]">{row.titleEn || row.slug}</p>
                     </td>
                     <td className="text-sm">{row.categoryName ?? '—'}</td>
-                    <td className="text-sm">{DIFFICULTY_LABEL[row.difficulty] ?? row.difficulty}</td>
                     <td className="text-sm">
-                      {row.levelTotal}/{row.levelsCount} 关 · {row.questionTotal} 题
+                      {tt(DIFFICULTY_LABEL[row.difficulty] ?? row.difficulty)}
                     </td>
-                    <td className="text-sm">{row.enrollFee > 0 ? `${row.enrollFee} 积分` : '免费'}</td>
+                    <td className="text-sm">
+                      {row.levelTotal}/{row.levelsCount} {tt('关')} · {row.questionTotal} {tt('题')}
+                    </td>
+                    <td className="text-sm">
+                      {row.enrollFee > 0 ? tt('{n} 积分', { n: row.enrollFee }) : tt('免费')}
+                    </td>
                     <td className="text-sm">{row.playerCount}</td>
                     <td>
-                      <span className={`rounded-full px-2 py-0.5 text-xs ${s.cls}`}>{s.text}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-xs ${s.cls}`}>{tt(s.text)}</span>
                     </td>
                     <td>
                       <Link href={`/dashboard/quizzes/${row.id}`} className="text-sm text-brand">
-                        编辑
+                        {tt('编辑')}
                       </Link>
                     </td>
                   </tr>
@@ -162,7 +168,7 @@ export default function QuizzesPage() {
             ) : (
               <tr>
                 <td colSpan={8} className="py-12 text-center text-sm text-[#98A2B3]">
-                  {loading ? '加载中…' : '暂无题库，点右上角新建'}
+                  {loading ? tt('加载中…') : tt('暂无题库，点右上角新建')}
                 </td>
               </tr>
             )}
@@ -171,10 +177,10 @@ export default function QuizzesPage() {
       </div>
 
       <div className="flex items-center justify-between text-sm text-[#667085]">
-        <span>共 {data?.total ?? 0} 条</span>
+        <span>{tt('共 {n} 条', { n: data?.total ?? 0 })}</span>
         <div className="flex items-center gap-2">
           <button type="button" className="btn-ghost h-9 px-3 text-[13px]" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-            上一页
+            {tt('上一页')}
           </button>
           <span>
             {page} / {totalPages}
@@ -185,7 +191,7 @@ export default function QuizzesPage() {
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
           >
-            下一页
+            {tt('下一页')}
           </button>
         </div>
       </div>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Loader2, RefreshCw, Search, UserRound } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { useI18n } from '@/lib/i18n';
 import { RevealPhone } from '@/components/reveal-phone';
 
 interface Row {
@@ -47,6 +48,7 @@ interface Detail extends Omit<Row, 'attempts'> {
 }
 
 export default function MembersPage() {
+  const { tt, date } = useI18n();
   const [data, setData] = useState<ListData | null>(null);
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState('');
@@ -67,11 +69,11 @@ export default function MembersPage() {
       if (status) q.set('status', status);
       setData(await apiFetch<ListData>(`/admin/users?${q}`));
     } catch (e) {
-      setError(e instanceof Error ? e.message : '加载失败');
+      setError(e instanceof Error ? e.message : tt('加载失败'));
     } finally {
       setLoading(false);
     }
-  }, [page, keyword, status]);
+  }, [page, keyword, status, tt]);
 
   useEffect(() => {
     void load();
@@ -83,7 +85,7 @@ export default function MembersPage() {
     try {
       setDetail(await apiFetch<Detail>(`/admin/users/${id}`));
     } catch (e) {
-      setError(e instanceof Error ? e.message : '加载失败');
+      setError(e instanceof Error ? e.message : tt('加载失败'));
     } finally {
       setBusy('');
     }
@@ -94,11 +96,11 @@ export default function MembersPage() {
     try {
       const next = row.status === 'BANNED' ? 'ACTIVE' : 'BANNED';
       await apiFetch(`/admin/users/${row.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: next }) });
-      setNotice(next === 'BANNED' ? '已封禁' : '已解封');
+      setNotice(next === 'BANNED' ? tt('已封禁') : tt('已解封'));
       await load();
       if (detail?.id === row.id) setDetail({ ...detail, status: next });
     } catch (e) {
-      setError(e instanceof Error ? e.message : '操作失败');
+      setError(e instanceof Error ? e.message : tt('操作失败'));
     } finally {
       setBusy('');
     }
@@ -113,13 +115,13 @@ export default function MembersPage() {
         method: 'POST',
         body: JSON.stringify({ delta: Number(adjust.delta), reason: adjust.reason }),
       });
-      setNotice(`已调整，当前余额 ${res.balance}`);
+      setNotice(tt('已调整，当前余额 {n}', { n: res.balance }));
       setAdjust({ delta: '', reason: '' });
       const fresh = await apiFetch<Detail>(`/admin/users/${detail.id}`);
       setDetail(fresh);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : '调整失败');
+      setError(e instanceof Error ? e.message : tt('调整失败'));
     } finally {
       setBusy('');
     }
@@ -131,21 +133,25 @@ export default function MembersPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold">用户管理</h1>
-          <p className="mt-1 text-sm text-[#667085]">查询用户、调整积分、封禁解封；手机号已脱敏</p>
+          <h1 className="text-xl font-semibold">{tt('用户管理')}</h1>
+          <p className="mt-1 text-sm text-[#667085]">
+            {tt('查询用户、调整积分、封禁解封；手机号已脱敏')}
+          </p>
         </div>
-        <span className="text-sm text-[#667085]">共 {data?.total ?? 0} 位用户</span>
+        <span className="text-sm text-[#667085]">
+          {tt('共 {n} 位用户', { n: data?.total ?? 0 })}
+        </span>
       </div>
 
       <div className="card flex flex-wrap items-end gap-3">
         <div>
-          <label className="label">关键词</label>
+          <label className="label">{tt('关键词')}</label>
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#98A2B3]" />
             <input
               className="input w-[240px] pl-8"
               value={keyword}
-              placeholder="手机号 / 昵称 / 用户名"
+              placeholder={tt('手机号 / 昵称 / 用户名')}
               onChange={(e) => {
                 setKeyword(e.target.value.trim());
                 setPage(1);
@@ -154,7 +160,7 @@ export default function MembersPage() {
           </div>
         </div>
         <div>
-          <label className="label">状态</label>
+          <label className="label">{tt('状态')}</label>
           <select
             className="input w-[140px]"
             value={status}
@@ -163,13 +169,13 @@ export default function MembersPage() {
               setPage(1);
             }}
           >
-            <option value="">全部</option>
-            <option value="ACTIVE">正常</option>
-            <option value="BANNED">已封禁</option>
+            <option value="">{tt('全部')}</option>
+            <option value="ACTIVE">{tt('正常')}</option>
+            <option value="BANNED">{tt('已封禁')}</option>
           </select>
         </div>
         <button type="button" className="btn-ghost h-10" onClick={() => void load()} disabled={loading}>
-          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> 刷新
+          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> {tt('刷新')}
         </button>
       </div>
 
@@ -180,14 +186,14 @@ export default function MembersPage() {
         <table className="table-base">
           <thead>
             <tr>
-              <th>用户</th>
-              <th>手机号</th>
-              <th>积分 / 累计</th>
-              <th>XP / 等级</th>
-              <th>答题数</th>
-              <th>状态</th>
-              <th>注册时间</th>
-              <th>操作</th>
+              <th>{tt('用户')}</th>
+              <th>{tt('手机号')}</th>
+              <th>{tt('积分 / 累计')}</th>
+              <th>{tt('XP / 等级')}</th>
+              <th>{tt('答题数')}</th>
+              <th>{tt('状态')}</th>
+              <th>{tt('注册时间')}</th>
+              <th>{tt('操作')}</th>
             </tr>
           </thead>
           <tbody>
@@ -220,16 +226,16 @@ export default function MembersPage() {
                         row.status === 'BANNED' ? 'bg-red-50 text-red-600' : 'bg-brand-soft text-brand'
                       }`}
                     >
-                      {row.status === 'BANNED' ? '已封禁' : '正常'}
+                      {row.status === 'BANNED' ? tt('已封禁') : tt('正常')}
                     </span>
                   </td>
                   <td className="whitespace-nowrap text-xs text-[#667085]">
-                    {new Date(row.createdAt).toLocaleDateString('zh-CN')}
+                    {date(row.createdAt)}
                   </td>
                   <td>
                     <div className="flex gap-3 text-sm">
                       <button type="button" className="text-brand" onClick={() => openDetail(row.id)} disabled={busy === row.id}>
-                        详情
+                        {tt('详情')}
                       </button>
                       <button
                         type="button"
@@ -237,7 +243,7 @@ export default function MembersPage() {
                         onClick={() => toggleStatus(row)}
                         disabled={busy === row.id}
                       >
-                        {row.status === 'BANNED' ? '解封' : '封禁'}
+                        {row.status === 'BANNED' ? tt('解封') : tt('封禁')}
                       </button>
                     </div>
                   </td>
@@ -246,7 +252,7 @@ export default function MembersPage() {
             ) : (
               <tr>
                 <td colSpan={8} className="py-12 text-center text-sm text-[#98A2B3]">
-                  {loading ? '加载中…' : '没有符合条件的用户'}
+                  {loading ? tt('加载中…') : tt('没有符合条件的用户')}
                 </td>
               </tr>
             )}
@@ -255,10 +261,10 @@ export default function MembersPage() {
       </div>
 
       <div className="flex items-center justify-between text-sm text-[#667085]">
-        <span>第 {page} 页</span>
+        <span>{tt('第 {n} 页', { n: page })}</span>
         <div className="flex items-center gap-2">
           <button type="button" className="btn-ghost h-9 px-3 text-[13px]" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-            上一页
+            {tt('上一页')}
           </button>
           <span>
             {page} / {totalPages}
@@ -269,7 +275,7 @@ export default function MembersPage() {
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
           >
-            下一页
+            {tt('下一页')}
           </button>
         </div>
       </div>
@@ -290,7 +296,7 @@ export default function MembersPage() {
                 </div>
               </div>
               <button type="button" className="text-sm text-[#667085]" onClick={() => setDetail(null)}>
-                关闭
+                {tt('关闭')}
               </button>
             </div>
 
@@ -302,48 +308,48 @@ export default function MembersPage() {
                 { label: '答题数', value: detail.attemptCount },
               ].map((s) => (
                 <div key={s.label} className="rounded-lg bg-[#F7F8F7] px-3 py-2">
-                  <p className="text-xs text-[#667085]">{s.label}</p>
+                  <p className="text-xs text-[#667085]">{tt(s.label)}</p>
                   <p className="mt-0.5 font-semibold">{s.value}</p>
                 </div>
               ))}
             </div>
 
             <div className="mt-4 rounded-lg border border-black/5 p-3">
-              <p className="text-sm font-medium">调整积分</p>
+              <p className="text-sm font-medium">{tt('调整积分')}</p>
               <div className="mt-2 flex flex-wrap items-end gap-2">
                 <div>
-                  <label className="label">变动值</label>
+                  <label className="label">{tt('变动值')}</label>
                   <input
                     className="input w-[120px]"
-                    placeholder="正负整数"
+                    placeholder={tt('正负整数')}
                     value={adjust.delta}
                     onChange={(e) => setAdjust({ ...adjust, delta: e.target.value })}
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="label">理由（必填）</label>
+                  <label className="label">{tt('理由（必填）')}</label>
                   <input
                     className="input"
-                    placeholder="例如：活动奖励补发"
+                    placeholder={tt('例如：活动奖励补发')}
                     value={adjust.reason}
                     onChange={(e) => setAdjust({ ...adjust, reason: e.target.value })}
                   />
                 </div>
                 <button type="button" className="btn-primary h-10" onClick={submitAdjust} disabled={busy === 'adjust'}>
                   {busy === 'adjust' ? <Loader2 size={14} className="animate-spin" /> : null}
-                  提交
+                  {tt('提交')}
                 </button>
               </div>
             </div>
 
             <div className="mt-4">
-              <p className="text-sm font-medium">最近积分流水</p>
+              <p className="text-sm font-medium">{tt('最近积分流水')}</p>
               <div className="mt-2 max-h-[200px] divide-y divide-black/5 overflow-auto text-sm">
                 {detail.transactions.length ? (
                   detail.transactions.map((t) => (
                     <div key={t.id} className="flex items-center justify-between py-2">
                       <span className="text-xs text-[#667085]">
-                        {new Date(t.createdAt).toLocaleString('zh-CN')} · {t.type}
+                        {date(t.createdAt, true)} · {t.type}
                         {t.remark ? ` · ${t.remark}` : ''}
                       </span>
                       <span className={t.change > 0 ? 'text-brand' : 'text-red-600'}>
@@ -352,7 +358,7 @@ export default function MembersPage() {
                     </div>
                   ))
                 ) : (
-                  <p className="py-4 text-center text-xs text-[#98A2B3]">暂无记录</p>
+                  <p className="py-4 text-center text-xs text-[#98A2B3]">{tt('暂无记录')}</p>
                 )}
               </div>
             </div>
