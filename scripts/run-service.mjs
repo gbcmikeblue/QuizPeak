@@ -13,6 +13,7 @@
  * 详见 scripts/lib/dev-env.mjs
  */
 import { spawn } from 'node:child_process';
+import { existsSync, rmSync, statSync } from 'node:fs';
 import { devEnv, stripSafeDeleteShim } from './lib/dev-env.mjs';
 
 const SERVICES = {
@@ -34,6 +35,25 @@ const rawNodeOptions = process.env.NODE_OPTIONS ?? '';
 if (stripSafeDeleteShim(rawNodeOptions) !== rawNodeOptions.trim()) {
   console.log('提示: 已剥离 IDE 注入的 safe-delete shim（构建缓存直接删除，不进回收站）');
 }
+
+/**
+ * H5 用 Vite 预构建依赖，workspace 包（@quizpeak/i18n、@quizpeak/shared）的 dist
+ * 更新后 Vite 不会自动失效，会出现「新词条不生效、部分文案还是中文」的怪现象。
+ * 启动 dev:h5 时若发现缓存比 dist 旧，就自动清一次，避免每次手动删。
+ */
+function clearStaleViteCache() {
+  const cache = 'web-h5/node_modules/.vite';
+  if (!existsSync(cache)) return;
+  const cacheTime = statSync(cache).mtimeMs;
+  const newer = ['packages/i18n/dist', 'packages/shared/dist'].some(
+    (dep) => existsSync(dep) && statSync(dep).mtimeMs > cacheTime,
+  );
+  if (!newer) return;
+  rmSync(cache, { recursive: true, force: true });
+  console.log('提示: 检测到 workspace 包已更新，已清理 Vite 预构建缓存（首次加载稍慢）');
+}
+
+if (name === 'h5') clearStaleViteCache();
 
 const child = spawn('npm', service.args, {
   shell: true,

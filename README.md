@@ -70,7 +70,7 @@ npm run dev:h5                  # http://localhost:3002  （H5，uni-app）
 | 小游戏（Wordling 三变体 / Hexling） | ✅ |
 | 题库管理后台 + 多角色权限矩阵 | ✅ |
 | 部署产物（Dockerfile ×3 / Nginx / compose / 备份 / 健康检查） | ✅ |
-| **H5（uni-app，`web-h5`）** | ✅ 8 个页面主链路 + 提示 / 逐题解析 / 多语言（小程序待建） |
+| **H5（uni-app，`web-h5`）** | ✅ 8 个页面主链路 + 提示 / 逐题解析 / 收藏 / 多语言（小程序待建） |
 | 小程序（uni-app 编译目标） | ⏳ 待建 |
 
 ## 积分规则（默认值，后台可改）
@@ -140,13 +140,13 @@ npx pm2 restart api                  # 改了后端并 build 后重启
 - 切换入口：PC 顶栏地球图标、后台顶栏「中文 / EN」、H5「我的 → 语言」；选择写入 cookie `qp_locale`（PC 与后台同域共享）与 H5 本地存储
 - H5 额外用 `uni.setTabBarItem` / `uni.setNavigationBarTitle` 同步 tabBar 与导航标题
 - 新增英文：在 `packages/i18n/src/phrases/en.ts` 加一条 `'中文原文': 'English'`，`npm run build:i18n` 后即生效
-- 注意：改动 `@quizpeak/i18n` 后 H5 dev server 需重启（Vite 预构建缓存，`web-h5/node_modules/.vite`）
+- 注意：H5 用 Vite 预构建依赖，改完 `@quizpeak/i18n`/`@quizpeak/shared` 的 dist 后缓存会失效不彻底。`npm run dev:h5`（`scripts/run-service.mjs`）已自动比较 mtime 并在需要时清理 `web-h5/node_modules/.vite`，无需手动删
 
 **覆盖进度**
 
 | 端 | 已翻译 | 待翻译 |
 | --- | --- | --- |
-| PC | 顶栏 / 页脚 / 首页 / 题库列表 / 题库卡片 / 竞赛列表 / 竞赛卡片 / 排行榜 / 通知 / 小游戏 | 题库详情、答题页、成绩页、竞赛详情、搜索、工单、文章、静态页、我的、积分 |
+| PC | 顶栏 / 页脚 / 首页 / 题库列表 / 题库卡片 / 竞赛列表 / 竞赛卡片 / 排行榜 / 积分中心 / 我的（含收藏/徽章/设置）/ 通知 / 小游戏 | 题库详情、答题页、成绩页、竞赛详情、搜索、工单、文章、三个静态页 |
 | Admin | 登录页 / 侧边栏 + 二级菜单 / 顶栏 / 无权限页 | 各业务页正文（题库、竞赛、任务、用户、工单、短信、审计等） |
 | H5 | 全部 8 个页面（首页/我的/登录/题库列表/题库详情/答题/排行榜/积分）+ tabBar + 导航标题 | — （题库详情描述、题干、选项等为数据库内容，不做翻译） |
 

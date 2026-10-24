@@ -347,6 +347,17 @@ export const api = {
 
   /* 我 */
   me: () => request<Me>('/me'),
+  favorites: (type: 'quiz' | 'contest' = 'quiz') =>
+    request<Array<Record<string, unknown>>>(`/me/favorites?type=${type}`),
+  favoriteCheck: (targetId: string, targetType: 'QUIZ' | 'CONTEST' = 'QUIZ') =>
+    request<{ favorited: boolean }>(
+      `/me/favorites/check?targetType=${targetType}&targetId=${targetId}`,
+    ),
+  toggleFavorite: (targetId: string, targetType: 'QUIZ' | 'CONTEST' = 'QUIZ') =>
+    request<{ favorited: boolean }>('/me/favorites/toggle', {
+      method: 'POST',
+      data: { targetType, targetId },
+    }),
   myRank: () => request<MyRank>('/leaderboard/me'),
   history: (type: 'quiz' | 'contest' = 'quiz', page = 1, pageSize = 10) =>
     request<PageResult<AttemptHistoryItem>>(

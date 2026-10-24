@@ -18,6 +18,9 @@ const quiz = ref<QuizDetail | null>(null);
 const progress = ref<QuizProgress | null>(null);
 const error = ref('');
 const starting = ref(false);
+/** 收藏状态 */
+const favorited = ref(false);
+const favBusy = ref(false);
 
 async function load() {
   error.value = '';
@@ -25,6 +28,12 @@ async function load() {
     quiz.value = await api.quiz(quizId.value);
     if (isLoggedIn()) {
       progress.value = await api.quizProgress(quizId.value);
+      api
+        .favoriteCheck(quizId.value, 'QUIZ')
+        .then((res) => {
+          favorited.value = res.favorited;
+        })
+        .catch(() => undefined);
       void loadMe();
     }
   } catch (err) {
@@ -44,6 +53,21 @@ onLoad((options) => {
 onShow(() => {
   syncNavTitle();
 });
+
+/** 收藏 / 取消收藏 */
+async function toggleFav() {
+  if (!requireLogin() || favBusy.value) return;
+  favBusy.value = true;
+  try {
+    const res = await api.toggleFavorite(quizId.value, 'QUIZ');
+    favorited.value = res.favorited;
+    uni.showToast({ title: res.favorited ? tt('收藏成功') : tt('已取消收藏'), icon: 'none' });
+  } catch (err) {
+    uni.showToast({ title: (err as Error).message, icon: 'none' });
+  } finally {
+    favBusy.value = false;
+  }
+}
 
 function levelOf(levelNo: number): LevelProgress | undefined {
   return progress.value?.levels.find((l) => l.levelNo === levelNo);
@@ -102,7 +126,12 @@ async function start(levelNo: number) {
 
     <template v-if="quiz">
       <view class="card head">
-        <view class="title">{{ quiz.title }}</view>
+        <view class="head-top">
+          <view class="title">{{ quiz.title }}</view>
+          <view class="fav" :class="{ on: favorited }" :title="favorited ? tt('已收藏') : tt('收藏')" @tap="toggleFav">
+            {{ favorited ? '♥' : '♡' }}
+          </view>
+        </view>
         <view class="meta">
           <text
             class="tag"
@@ -186,10 +215,28 @@ async function start(levelNo: number) {
   background: linear-gradient(150deg, #ffffff 0%, #f3faf6 100%);
 }
 
+.head-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
 .title {
   font-size: 38rpx;
   font-weight: 700;
   color: $text-strong;
+}
+
+.fav {
+  font-size: 44rpx;
+  line-height: 1;
+  color: #c4cad3;
+  padding: 0 6rpx;
+}
+
+.fav.on {
+  color: #e5484d;
 }
 
 .meta {

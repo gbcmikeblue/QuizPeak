@@ -16,6 +16,7 @@ import {
 } from '@/lib/i18n';
 
 const history = ref<AttemptHistoryItem[]>([]);
+const favorites = ref<Array<Record<string, unknown>>>([]);
 const loading = ref(false);
 
 async function load() {
@@ -26,10 +27,12 @@ async function load() {
   loading.value = true;
   await loadMe(true);
   try {
-    const res = await api.history('quiz', 1, 5);
+    const [res, fav] = await Promise.all([api.history('quiz', 1, 5), api.favorites('quiz')]);
     history.value = res.list;
+    favorites.value = fav;
   } catch {
     history.value = [];
+    favorites.value = [];
   } finally {
     loading.value = false;
   }
@@ -51,6 +54,10 @@ function goLogin() {
 
 function goPoints() {
   uni.navigateTo({ url: '/pages/points/index' });
+}
+
+function openQuiz(id: string) {
+  uni.navigateTo({ url: `/pages/quiz/detail?id=${id}` });
 }
 
 function confirmLogout() {
@@ -143,6 +150,28 @@ function changeLocale(next: Locale) {
               {{ LOCALE_LABELS[item] }}
             </view>
           </view>
+        </view>
+      </view>
+
+      <view class="section-title"><text>{{ tt('我的收藏') }}</text></view>
+      <view class="card">
+        <view v-if="favorites.length === 0" class="empty" style="padding: 36rpx 0">
+          {{ tt('暂无收藏') }}
+        </view>
+        <view
+          v-for="fav in favorites.slice(0, 5)"
+          :key="String(fav.id)"
+          class="history"
+          @tap="openQuiz(String(fav.id))"
+        >
+          <view class="grow">
+            <view class="history-title">{{ String(fav.title ?? '') }}</view>
+            <view class="muted">
+              {{ tt('{n} 关', { n: String(fav.levelsCount ?? 0) }) }} ·
+              {{ tt('{n} 人参与', { n: String(fav.playerCount ?? 0) }) }}
+            </view>
+          </view>
+          <view class="fav-arrow">›</view>
         </view>
       </view>
 
@@ -283,6 +312,12 @@ function changeLocale(next: Locale) {
   font-size: 32rpx;
   font-weight: 700;
   color: $brand;
+}
+
+.fav-arrow {
+  color: #cbd2dc;
+  font-size: 34rpx;
+  padding-left: 12rpx;
 }
 
 .history-total {
